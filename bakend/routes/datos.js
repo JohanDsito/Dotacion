@@ -71,6 +71,8 @@ router.get('/empleados', async (req, res) => {
     ? req.usuario.dependencia_id
     : dependencia_id
 
+  console.log('📡 GET /empleados - Rol:', req.usuario.rol, 'depId:', depId)
+
   if (!depId) {
     return res.status(400).json({ error: 'dependencia_id es requerido' })
   }
@@ -99,7 +101,15 @@ router.get('/empleados', async (req, res) => {
     .eq('activo', true)
     .order('nombre')
 
-  if (error) return res.status(500).json({ error: error.message })
+  if (error) {
+    console.error('❌ Error:', error, error.code, error.message)
+    return res.status(500).json({ error: error.message })
+  }
+  
+  console.log('✅ Se encontraron', data?.length || 0, 'empleados')
+  data?.forEach(emp => {
+    console.log(`  - ${emp.nombre}: ${emp.dotaciones?.length || 0} dotaciones`)
+  })
   return res.json(data)
 })
 

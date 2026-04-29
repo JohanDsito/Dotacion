@@ -59,6 +59,18 @@ router.post('/login', async (req, res) => {
     return res.status(400).json({ error: 'Coordinador no encontrado' })
   }
 
+  // Obtener nombre de la dependencia
+  const { data: dep, error: depError } = await supabase
+    .from('dependencias')
+    .select('nombre')
+    .eq('id', dependencia_id)
+    .single()
+
+  if (depError || !dep) {
+    console.log('❌ Dependencia no encontrada:', depError)
+    return res.status(400).json({ error: 'Dependencia no encontrada' })
+  }
+
   console.log('✅ Coordinador validado:', coord.nombre)
 
   const token = jwt.sign(
@@ -77,7 +89,8 @@ router.post('/login', async (req, res) => {
     rol: 'coordinador',
     nombre: coord.nombre,
     coordinador_id: coord.id,
-    dependencia_id
+    dependencia_id,
+    dependencia_nombre: dep.nombre
   })
 })
 

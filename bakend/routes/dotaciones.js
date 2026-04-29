@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import supabase from '../config/supabase.js'
-import { verificarToken, formularioAbierto } from '../middleware/auth.js'
+import { formularioAbierto, verificarToken } from '../middleware/auth.js'
 
 const router = Router()
 
@@ -43,6 +43,8 @@ router.post('/', verificarToken, formularioAbierto, async (req, res) => {
     incluye_bono_calzado = false
   } = req.body
 
+  console.log('💾 POST /dotaciones - Intento:', { empleado_id, tipo_prenda_id, coordinador: req.usuario.coordinador_id })
+
   // Obtener datos de la prenda para validar
   const { data: prenda, error: prendaError } = await supabase
     .from('tipos_prenda')
@@ -51,11 +53,13 @@ router.post('/', verificarToken, formularioAbierto, async (req, res) => {
     .single()
 
   if (prendaError || !prenda) {
+    console.error('❌ Prenda no encontrada:', prendaError)
     return res.status(400).json({ error: 'Tipo de prenda no encontrado' })
   }
 
   const errores = validarDotacion(req.body, prenda)
   if (errores.length > 0) {
+    console.error('❌ Errores de validación:', errores)
     return res.status(400).json({ errores })
   }
 
@@ -71,6 +75,7 @@ router.post('/', verificarToken, formularioAbierto, async (req, res) => {
       .single()
 
     if (emp?.dependencia_id !== req.usuario.dependencia_id) {
+      console.error('❌ Empleado no pertenece a la dependencia del coordinador')
       return res.status(403).json({ error: 'Este empleado no pertenece a tu dependencia' })
     }
   }
@@ -87,6 +92,8 @@ router.post('/', verificarToken, formularioAbierto, async (req, res) => {
     incluye_bono_calzado
   }
 
+  console.log('📝 Payload a guardar:', payload)
+
   // UPSERT: inserta si no existe, actualiza si ya existe (por empleado_id)
   const { data, error } = await supabase
     .from('dotaciones')
@@ -94,8 +101,16 @@ router.post('/', verificarToken, formularioAbierto, async (req, res) => {
     .select()
     .single()
 
-  if (error) return res.status(500).json({ error: error.message })
+  if (error) {
+    console.error('❌ Error en Supabase:', error)
+    return res.status(500).json({ error: error.message })
+  }
 
+  console.log('✅ Dotación guardada:', data)
+  
+  // Pequeño delay para asegurar que la BD procese
+  await new Promise(resolve => setTimeout(resolve, 100))
+  
   return res.json({ mensaje: 'Dotación guardada correctamente', dotacion: data })
 })
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Navbar from '../components/Navbar.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { api } from '../services/api.js'
@@ -79,7 +79,7 @@ function ModalDotacion({ empleado, prendas, dotacion, cerrado, onGuardar, onCerr
         talla_general:  tallaGeneral,
         incluye_bono_calzado: bonCalzado,
       })
-      onCerrar()
+      // El onCerrar() será llamado por el componente padre después de recargar
     } catch (err) {
       setError(err.message)
     } finally {
@@ -269,28 +269,44 @@ export default function Formulario() {
 
   const cargar = useCallback(async () => {
     setCargando(true)
+    console.log('📡 Cargando empleados - Rol:', usuario.rol, 'dependencia_id:', usuario.dependencia_id)
     try {
       const [emps, prends, estado] = await Promise.all([
         api.empleados(usuario.dependencia_id),
         api.prendas(),
         api.estadoFormulario(),
       ])
+      console.log('✅ Empleados cargados:', emps.length)
+      emps.forEach(emp => {
+        console.log(`  - ${emp.nombre}: ${emp.dotaciones?.length || 0} dotaciones`, emp.dotaciones)
+      })
       setEmpleados(emps)
       setPrendas(prends)
       setCerrado(estado.cerrado)
     } catch (err) {
       mostrarToast(err.message, 'error')
+      console.error('❌ Error cargando:', err)
     } finally {
       setCargando(false)
     }
-  }, [usuario.dependencia_id])
+  }, [usuario.dependencia_id, usuario.rol])
 
   useEffect(() => { cargar() }, [cargar])
 
   const handleGuardar = async (payload) => {
-    await api.guardarDotacion(payload)
-    mostrarToast('Dotación guardada correctamente')
-    cargar()
+    try {
+      console.log('💾 Guardando dotación:', payload)
+      await api.guardarDotacion(payload)
+      console.log('✅ Dotación guardada, recargando empleados...')
+      mostrarToast('Dotación guardada correctamente')
+      await cargar() // Esperar a que se recargen los datos
+      console.log('✅ Empleados recarados, cerrando modal')
+      setModalEmp(null) // Cerrar modal después de actualizar
+    } catch (err) {
+      console.error('❌ Error:', err)
+      mostrarToast(err.message, 'error')
+      // No cerrar el modal si hay error, para que el usuario pueda reintentar
+    }
   }
 
   const empFiltrados = empleados.filter(e =>
