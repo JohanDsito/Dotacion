@@ -49,15 +49,15 @@ function ModalDotacion({ empleado, prendas, dotacion, cerrado, onGuardar, onCerr
   useEffect(() => {
     if (!dotacion && !tipoPrendaId) {
       const sugerida = prendas.find(p => {
-        if (empleado.tipo_cargo === 'aseo')          return p.es_aseo
-        if (empleado.tipo_cargo === 'operativo')     return p.codigo === 7
-        if (empleado.tipo_cargo === 'profesional')   return p.es_elegante
+        if (empleado.tipo_cargo === 'aseo')           return p.es_aseo
+        if (empleado.tipo_cargo === 'operativo')      return p.codigo === 7
+        if (empleado.tipo_cargo === 'profesional')    return p.es_elegante
         if (empleado.tipo_cargo === 'administrativo') return p.es_elegante
         return false
       })
       if (sugerida) setTipoPrendaId(sugerida.id)
     }
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleGuardar = async () => {
     setError('')
@@ -71,18 +71,17 @@ function ModalDotacion({ empleado, prendas, dotacion, cerrado, onGuardar, onCerr
     setGuardando(true)
     try {
       await onGuardar({
-        empleado_id: empleado.id,
-        tipo_prenda_id: tipoPrendaId,
-        talla_camisa:   tallaCamisa,
-        talla_saco:     tallaSaco,
-        talla_pantalon: tallaPantalon,
-        talla_general:  tallaGeneral,
+        empleado_id:          empleado.id,
+        tipo_prenda_id:       tipoPrendaId,
+        talla_camisa:         tallaCamisa,
+        talla_saco:           tallaSaco,
+        talla_pantalon:       tallaPantalon,
+        talla_general:        tallaGeneral,
         incluye_bono_calzado: bonCalzado,
       })
-      // El onCerrar() será llamado por el componente padre después de recargar
+      // onGuardar cierra el modal al terminar correctamente
     } catch (err) {
       setError(err.message)
-    } finally {
       setGuardando(false)
     }
   }
@@ -118,7 +117,10 @@ function ModalDotacion({ empleado, prendas, dotacion, cerrado, onGuardar, onCerr
             <label className="input-label">Tipo de prenda <span className="req">*</span></label>
             <select
               className="input" value={tipoPrendaId}
-              onChange={e => { setTipoPrendaId(e.target.value); setTallaCamisa(''); setTallaSaco(''); setTallaPantalon(''); setTallaGeneral('') }}
+              onChange={e => {
+                setTipoPrendaId(e.target.value)
+                setTallaCamisa(''); setTallaSaco(''); setTallaPantalon(''); setTallaGeneral('')
+              }}
               disabled={cerrado}
             >
               <option value="">Selecciona una prenda</option>
@@ -277,9 +279,6 @@ export default function Formulario() {
         api.estadoFormulario(),
       ])
       console.log('✅ Empleados cargados:', emps.length)
-      emps.forEach(emp => {
-        console.log(`  - ${emp.nombre}: ${emp.dotaciones?.length || 0} dotaciones`, emp.dotaciones)
-      })
       setEmpleados(emps)
       setPrendas(prends)
       setCerrado(estado.cerrado)
@@ -293,19 +292,39 @@ export default function Formulario() {
 
   useEffect(() => { cargar() }, [cargar])
 
+  // ── Guardar dotación ──────────────────────────────────────────────────────
+  // En lugar de recargar TODOS los empleados desde el servidor,
+  // actualizamos solo el empleado afectado en el estado local.
+  // Esto evita el parpadeo "Pendiente" y es más rápido.
   const handleGuardar = async (payload) => {
     try {
       console.log('💾 Guardando dotación:', payload)
-      await api.guardarDotacion(payload)
-      console.log('✅ Dotación guardada, recargando empleados...')
+      const resultado = await api.guardarDotacion(payload)
+      console.log('✅ Respuesta del servidor:', resultado)
+
+      // Actualizar el empleado en el estado local con la dotación devuelta
+      setEmpleados(prev => prev.map(emp => {
+        if (emp.id !== payload.empleado_id) return emp
+        return {
+          ...emp,
+          dotaciones: [resultado.dotacion]  // la dotación ya viene con tipos_prenda incluido
+        }
+      }))
+
+      // Si el modal estaba abierto con ese empleado, actualizar su referencia
+      // para que al "Editar" de nuevo vea los datos actuales
+      setModalEmp(prev => {
+        if (!prev || prev.id !== payload.empleado_id) return null
+        return { ...prev, dotaciones: [resultado.dotacion] }
+      })
+
       mostrarToast('Dotación guardada correctamente')
-      await cargar() // Esperar a que se recargen los datos
-      console.log('✅ Empleados recarados, cerrando modal')
-      setModalEmp(null) // Cerrar modal después de actualizar
+      setModalEmp(null)  // cerrar modal
+
     } catch (err) {
-      console.error('❌ Error:', err)
-      mostrarToast(err.message, 'error')
-      // No cerrar el modal si hay error, para que el usuario pueda reintentar
+      console.error('❌ Error guardando:', err)
+      // El error se propaga al modal para que lo muestre
+      throw err
     }
   }
 

@@ -1,23 +1,37 @@
+import cors from 'cors'
 import 'dotenv/config'
 import express from 'express'
-import cors from 'cors'
 
-import authRoutes      from './routes/auth.js'
-import datosRoutes     from './routes/datos.js'
+import adminRoutes from './routes/admin.js'
+import authRoutes from './routes/auth.js'
+import datosRoutes from './routes/datos.js'
 import dotacionesRoutes from './routes/dotaciones.js'
-import adminRoutes     from './routes/admin.js'
 
 const app  = express()
 const PORT = process.env.PORT || 3001
 
+// ── Origins permitidos ───────────────────────────────────────
+// En producción, define FRONTEND_URL en tu .env (ej: https://tu-app.vercel.app)
+// Puedes agregar varios separados por coma: https://a.vercel.app,https://b.vercel.app
+const originsPermitidos = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  ...(process.env.FRONTEND_URL
+    ? process.env.FRONTEND_URL.split(',').map(u => u.trim())
+    : [])
+]
+
+console.log('🌐 Origins CORS permitidos:', originsPermitidos)
+
 // ── Middlewares globales ────────────────────────────────────
 app.use(cors({
-  origin: [
-    'http://localhost:5173',   // React en desarrollo (Vite)
-    'http://localhost:3000',
-    // Cuando hagas deploy, agrega aquí la URL de Vercel:
-    // 'https://tu-app.vercel.app'
-  ],
+  origin: (origin, callback) => {
+    // Permitir requests sin origin (ej: Postman, curl, mobile apps)
+    if (!origin) return callback(null, true)
+    if (originsPermitidos.includes(origin)) return callback(null, true)
+    console.warn('⚠️  CORS bloqueado para origin:', origin)
+    callback(new Error(`CORS: origin no permitido → ${origin}`))
+  },
   credentials: true
 }))
 app.use(express.json())
@@ -45,6 +59,10 @@ app.use((req, res) => {
 // ── Manejo de errores globales ───────────────────────────────
 app.use((err, req, res, next) => {
   console.error('Error no manejado:', err)
+  // Si es error de CORS, devolver 403 claro
+  if (err.message?.startsWith('CORS:')) {
+    return res.status(403).json({ error: err.message })
+  }
   res.status(500).json({ error: 'Error interno del servidor' })
 })
 

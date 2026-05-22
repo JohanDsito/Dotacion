@@ -17,7 +17,7 @@ function validarDotacion(body, prenda) {
     if (!TALLAS_VALIDAS.includes(body.talla_camisa))   errores.push('talla_camisa inválida')
     if (!TALLAS_VALIDAS.includes(body.talla_saco))     errores.push('talla_saco inválida')
     if (!TALLAS_VALIDAS.includes(body.talla_pantalon)) errores.push('talla_pantalon inválida')
-  } else if (prenda.requiere_talla) {
+  } else if (prenda.requiere_talla && !prenda.es_aseo) {
     if (!TALLAS_VALIDAS.includes(body.talla_general))  errores.push('talla_general inválida')
   }
   // Si es aseo (no requiere talla), no se valida ninguna talla
@@ -85,21 +85,68 @@ router.post('/', verificarToken, formularioAbierto, async (req, res) => {
     empleado_id,
     coordinador_id,
     tipo_prenda_id,
-    talla_camisa:   prenda.es_elegante   ? talla_camisa   : null,
-    talla_saco:     prenda.es_elegante   ? talla_saco     : null,
-    talla_pantalon: prenda.es_elegante   ? talla_pantalon : null,
+    talla_camisa:   prenda.es_elegante                        ? talla_camisa   : null,
+    talla_saco:     prenda.es_elegante                        ? talla_saco     : null,
+    talla_pantalon: prenda.es_elegante                        ? talla_pantalon : null,
     talla_general:  prenda.requiere_talla && !prenda.es_elegante ? talla_general : null,
-    incluye_bono_calzado
+    incluye_bono_calzado,
+    actualizado_en: new Date().toISOString()  // ← siempre actualizamos la fecha
   }
 
   console.log('📝 Payload a guardar:', payload)
 
-  // UPSERT: inserta si no existe, actualiza si ya existe (por empleado_id)
-  const { data, error } = await supabase
+  // ── Verificar si ya existe una dotación para este empleado ──────────────
+  const { data: existente, error: buscarError } = await supabase
     .from('dotaciones')
-    .upsert(payload, { onConflict: 'empleado_id' })
-    .select()
-    .single()
+    .select('id')
+    .eq('empleado_id', empleado_id)
+    .maybeSingle()  // maybeSingle no lanza error si no encuentra nada
+
+  if (buscarError) {
+    console.error('❌ Error buscando dotación existente:', buscarError)
+    return res.status(500).json({ error: buscarError.message })
+  }
+
+  let data, error
+
+  if (existente) {
+    // ── UPDATE: ya existe, actualizar ──────────────────────────────────────
+    console.log('🔄 Actualizando dotación existente id:', existente.id)
+    ;({ data, error } = await supabase
+      .from('dotaciones')
+      .update(payload)
+      .eq('empleado_id', empleado_id)
+      .select(`
+        id,
+        tipo_prenda_id,
+        talla_camisa,
+        talla_saco,
+        talla_pantalon,
+        talla_general,
+        incluye_bono_calzado,
+        actualizado_en,
+        tipos_prenda (codigo, nombre, es_elegante, es_aseo, requiere_talla)
+      `)
+      .single())
+  } else {
+    // ── INSERT: no existe, crear nueva ────────────────────────────────────
+    console.log('➕ Creando nueva dotación')
+    ;({ data, error } = await supabase
+      .from('dotaciones')
+      .insert(payload)
+      .select(`
+        id,
+        tipo_prenda_id,
+        talla_camisa,
+        talla_saco,
+        talla_pantalon,
+        talla_general,
+        incluye_bono_calzado,
+        actualizado_en,
+        tipos_prenda (codigo, nombre, es_elegante, es_aseo, requiere_talla)
+      `)
+      .single())
+  }
 
   if (error) {
     console.error('❌ Error en Supabase:', error)
@@ -107,10 +154,9 @@ router.post('/', verificarToken, formularioAbierto, async (req, res) => {
   }
 
   console.log('✅ Dotación guardada:', data)
-  
-  // Pequeño delay para asegurar que la BD procese
-  await new Promise(resolve => setTimeout(resolve, 100))
-  
+
+  // Devolvemos la dotación completa (con tipos_prenda incluido)
+  // para que el frontend pueda actualizar el estado local sin recargar
   return res.json({ mensaje: 'Dotación guardada correctamente', dotacion: data })
 })
 
