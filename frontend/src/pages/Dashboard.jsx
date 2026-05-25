@@ -74,7 +74,7 @@ export default function Dashboard() {
     try {
       if (resumen?.formulario_cerrado) {
         await api.abrirFormulario()
-        mostrarToast('Formulario abierto — los coordinadores ya pueden registrar')
+        mostrarToast('Formulario abierto — los responsables de proceso ya pueden registrar')
       } else {
         await api.cerrarFormulario()
         mostrarToast('Formulario cerrado — no se aceptan nuevos registros')
@@ -173,8 +173,8 @@ export default function Dashboard() {
             <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 4a.75.75 0 01.75.75v3a.75.75 0 01-1.5 0v-3A.75.75 0 018 5zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
           </svg>
           {resumen?.formulario_cerrado
-            ? 'El formulario está CERRADO. Los coordinadores no pueden registrar nuevas solicitudes.'
-            : 'El formulario está ABIERTO. Los coordinadores pueden registrar y editar dotaciones.'}
+            ? 'El formulario está CERRADO. Los responsables de proceso no pueden registrar nuevas solicitudes.'
+            : 'El formulario está ABIERTO. Los responsables de proceso pueden registrar y editar dotaciones.'}
         </div>
 
         {/* Stats */}
@@ -281,7 +281,7 @@ export default function Dashboard() {
                     <th className="hide-mobile">Cargo</th>
                     <th>Prenda</th>
                     <th className="hide-mobile">Tallas</th>
-                    <th className="hide-mobile">Coordinador</th>
+                    <th className="hide-mobile">Responsable de proceso</th>
                     <th className="hide-mobile">Fecha</th>
                   </tr>
                 </thead>
@@ -337,8 +337,8 @@ export default function Dashboard() {
             <div className="modal-body">
               <p style={{ color: 'var(--text-secondary)', lineHeight: 1.7, fontSize: '0.9rem' }}>
                 {accion === 'cerrar'
-                  ? 'Al cerrar el formulario, ningún coordinador podrá registrar ni editar dotaciones. Podrás volver a abrirlo cuando quieras.'
-                  : 'Al abrir el formulario, los coordinadores podrán registrar y editar dotaciones nuevamente.'}
+                  ? 'Al cerrar el formulario, ningún responsable de proceso podrá registrar ni editar dotaciones. Podrás volver a abrirlo cuando quieras.'
+                  : 'Al abrir el formulario, los responsables de proceso podrán registrar y editar dotaciones nuevamente.'}
               </p>
             </div>
             <div className="modal-footer">

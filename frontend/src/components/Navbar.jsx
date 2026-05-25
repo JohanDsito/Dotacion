@@ -48,7 +48,7 @@ export default function Navbar() {
               Dotación
             </div>
             <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.45)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-              {usuario.rol === 'admin' ? 'Panel administrativo' : usuario.dependencia_nombre || 'Coordinador'}
+              {usuario.rol === 'admin' ? 'Panel administrativo' : usuario.dependencia_nombre || 'Responsable de proceso'}
             </div>
           </div>
         </div>
@@ -58,7 +58,7 @@ export default function Navbar() {
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: '0.875rem', fontWeight: 500, color: 'white' }}>{usuario.nombre}</div>
             <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.45)' }}>
-              {usuario.rol === 'admin' ? 'Administrador' : 'Coordinador'}
+              {usuario.rol === 'admin' ? 'Administrador' : 'Responsable de proceso'}
             </div>
           </div>
           <div style={{
@@ -111,7 +111,7 @@ export default function Navbar() {
         }} className="mobile-menu">
           <div style={{ color: 'white', fontWeight: 500, marginBottom: '4px' }}>{usuario.nombre}</div>
           <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.8rem', marginBottom: '16px' }}>
-            {usuario.rol === 'admin' ? 'Administrador' : `Coordinador · ${usuario.dependencia_nombre}`}
+            {usuario.rol === 'admin' ? 'Administrador' : `Responsable de proceso · ${usuario.dependencia_nombre}`}
           </div>
           <button className="btn btn-secondary btn-full" onClick={handleLogout}>
             Cerrar sesión

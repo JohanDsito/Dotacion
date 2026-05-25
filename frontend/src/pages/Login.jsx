@@ -234,7 +234,7 @@ export default function Login() {
             marginBottom: '24px', gap: '4px',
           }}>
             {[
-              { label: 'Coordinador', val: false },
+              { label: 'Responsable de proceso', val: false },
               { label: 'Administrador', val: true },
             ].map(({ label, val }) => (
               <button
@@ -275,7 +275,7 @@ export default function Login() {
 
             {!esAdmin && (
               <div className="input-group">
-                <label className="input-label">Coordinador <span className="req">*</span></label>
+                <label className="input-label">Responsable de proceso <span className="req">*</span></label>
                 {cargandoCoord && depId ? (
                   <div style={{
                     display: 'flex', alignItems: 'center', gap: '10px',
@@ -284,7 +284,7 @@ export default function Login() {
                     fontSize: '0.875rem',
                   }}>
                     <span className="spinner" style={{ width: '16px', height: '16px' }}/>
-                    Cargando coordinadores…
+                    Cargando responsables…
                   </div>
                 ) : (
                   <select
@@ -297,8 +297,8 @@ export default function Login() {
                       {!depId
                         ? 'Selecciona dependencia primero'
                         : coordinadores.length === 0
-                          ? 'No hay coordinadores'
-                          : 'Selecciona coordinador'}
+                          ? 'No hay responsables registrados'
+                          : 'Selecciona responsable de proceso'}
                     </option>
                     {coordinadores.map(c => (
                       <option key={c.id} value={c.id}>{c.nombre}</option>
@@ -312,7 +312,7 @@ export default function Login() {
               <label className="input-label">Clave de acceso <span className="req">*</span></label>
               <input
                 className="input" type="password"
-                placeholder={esAdmin ? 'Clave del administrador' : 'Clave del coordinador'}
+                placeholder={esAdmin ? 'Clave del administrador' : 'Clave del responsable de proceso'}
                 value={clave} onChange={e => setClave(e.target.value)} required
               />
             </div>
