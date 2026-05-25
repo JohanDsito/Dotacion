@@ -128,9 +128,9 @@ export default function Login() {
             color: 'white', lineHeight: 1.2,
             marginBottom: '16px',
           }}>
-            Gestión de<br/>
-            <em style={{ fontStyle: 'italic', color: 'var(--dorado-cl)' }}>dotación</em><br/>
-            del personal
+            PROCEDIMIENTO PARA DETERMINAR DERECHO, COMPRA, ENTREGA Y USO DE DOTACION DE LOS <br/>
+            <em style={{ fontStyle: 'italic', color: 'var(--dorado-cl)' }}>TRABAJADORES DE LA CAJA DE COMPENSACIÓN FAMILIAR DE NARIÑO Código: PGR-SGH-P-17 </em><br/>
+            Versión: 2 Fecha de Aprobación:12/05/2023
           </h1>
           <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.9rem', lineHeight: 1.7, maxWidth: '320px' }}>
             Plataforma para el registro y seguimiento de prendas asignadas a cada trabajador por dependencia.
