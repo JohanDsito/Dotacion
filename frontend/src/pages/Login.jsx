@@ -115,7 +115,10 @@ export default function Login() {
               </svg>
             </div>
             <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', fontWeight: 600, color: 'white' }}>
-              Sistema de Dotación
+              PRIMERA ENTREGA DE DOTACION AÑO 2026 
+               PERSONAL QUE DEVENGA HASTA 2SMMLV 
+              CAJA DE COMPENSACION FAMILIAR DE NARIÑO
+
             </span>
           </div>
 
