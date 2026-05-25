@@ -4,7 +4,9 @@ import { formularioAbierto, verificarToken } from '../middleware/auth.js'
 
 const router = Router()
 
-const TALLAS_VALIDAS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
+const TALLAS_VALIDAS        = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
+const TALLAS_PANTALON_MANT  = ['30', '32', '34', '36', '38', '40']
+const CODIGOS_MANTENIMIENTO = [6, 8]
 
 // Valida el body según el tipo de prenda
 function validarDotacion(body, prenda) {
@@ -13,7 +15,13 @@ function validarDotacion(body, prenda) {
   if (!body.empleado_id)    errores.push('empleado_id es requerido')
   if (!body.tipo_prenda_id) errores.push('tipo_prenda_id es requerido')
 
-  if (prenda.es_elegante) {
+  const esMantenimiento = CODIGOS_MANTENIMIENTO.includes(prenda.codigo)
+
+  if (esMantenimiento) {
+    if (!TALLAS_VALIDAS.includes(body.talla_saco))           errores.push('talla_chaqueta inválida')
+    if (!TALLAS_VALIDAS.includes(body.talla_camisa))         errores.push('talla_camibuso inválida')
+    if (!TALLAS_PANTALON_MANT.includes(body.talla_pantalon)) errores.push('talla_pantalon inválida')
+  } else if (prenda.es_elegante) {
     if (!TALLAS_VALIDAS.includes(body.talla_camisa))   errores.push('talla_camisa inválida')
     if (!TALLAS_VALIDAS.includes(body.talla_saco))     errores.push('talla_saco inválida')
     if (!TALLAS_VALIDAS.includes(body.talla_pantalon)) errores.push('talla_pantalon inválida')
@@ -48,7 +56,7 @@ router.post('/', verificarToken, formularioAbierto, async (req, res) => {
   // Obtener datos de la prenda para validar
   const { data: prenda, error: prendaError } = await supabase
     .from('tipos_prenda')
-    .select('id, es_elegante, es_aseo, requiere_talla')
+    .select('id, codigo, es_elegante, es_aseo, requiere_talla')
     .eq('id', tipo_prenda_id)
     .single()
 
@@ -81,16 +89,17 @@ router.post('/', verificarToken, formularioAbierto, async (req, res) => {
   }
 
   // Preparar datos limpios (nulls donde no aplica)
+  const esMantenimiento = CODIGOS_MANTENIMIENTO.includes(prenda.codigo)
   const payload = {
     empleado_id,
     coordinador_id,
     tipo_prenda_id,
-    talla_camisa:   prenda.es_elegante                        ? talla_camisa   : null,
-    talla_saco:     prenda.es_elegante                        ? talla_saco     : null,
-    talla_pantalon: prenda.es_elegante                        ? talla_pantalon : null,
-    talla_general:  prenda.requiere_talla && !prenda.es_elegante ? talla_general : null,
+    talla_camisa:   (prenda.es_elegante || esMantenimiento) ? talla_camisa   : null,
+    talla_saco:     (prenda.es_elegante || esMantenimiento) ? talla_saco     : null,
+    talla_pantalon: (prenda.es_elegante || esMantenimiento) ? talla_pantalon : null,
+    talla_general:  (prenda.requiere_talla && !prenda.es_elegante && !esMantenimiento) ? talla_general : null,
     incluye_bono_calzado,
-    actualizado_en: new Date().toISOString()  // ← siempre actualizamos la fecha
+    actualizado_en: new Date().toISOString()
   }
 
   console.log('📝 Payload a guardar:', payload)
