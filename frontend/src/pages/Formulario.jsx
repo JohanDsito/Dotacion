@@ -6,6 +6,7 @@ import { api } from '../services/api.js'
 const TALLAS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
 const TALLAS_PANTALON_MANT = ['30', '32', '34', '36', '38', '40']
 const CODIGOS_MANTENIMIENTO = [6, 8]
+const CODIGOS_SUDADERA = [7]
 
 function TallaSelector({ label, value, onChange, disabled, tallas = TALLAS }) {
   return (
@@ -47,6 +48,7 @@ function ModalDotacion({ empleado, prendas, dotacion, cerrado, onGuardar, onCerr
 
   const prenda = prendas.find(p => p.id === tipoPrendaId)
   const esMantenimiento = prenda && CODIGOS_MANTENIMIENTO.includes(prenda.codigo)
+  const esSudadera      = prenda && CODIGOS_SUDADERA.includes(prenda.codigo)
 
   // Calcular prenda sugerida por defecto según tipo_cargo
   useEffect(() => {
@@ -67,6 +69,8 @@ function ModalDotacion({ empleado, prendas, dotacion, cerrado, onGuardar, onCerr
     if (!tipoPrendaId) { setError('Selecciona un tipo de prenda'); return }
     if (esMantenimiento) {
       if (!tallaSaco || !tallaCamisa || !tallaPantalon) { setError('Ingresa las 3 tallas del uniforme de mantenimiento'); return }
+    } else if (esSudadera) {
+      if (!tallaSaco || !tallaCamisa || !tallaPantalon) { setError('Ingresa las 3 tallas de la sudadera'); return }
     } else if (prenda?.es_elegante) {
       if (!tallaCamisa || !tallaSaco || !tallaPantalon) { setError('Ingresa las 3 tallas del traje'); return }
     } else if (prenda?.requiere_talla && !prenda.es_aseo) {
@@ -149,7 +153,18 @@ function ModalDotacion({ empleado, prendas, dotacion, cerrado, onGuardar, onCerr
             </div>
           )}
 
-          {prenda?.es_elegante && !esMantenimiento && (
+          {esSudadera && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '16px', background: 'var(--azul-50)', borderRadius: 'var(--r-lg)', border: '1px solid var(--azul-100)' }}>
+              <p style={{ fontSize: '0.8rem', color: 'var(--azul-700)', fontWeight: 500 }}>
+                Sudadera — ingresa cada talla por separado
+              </p>
+              <TallaSelector label="Chaqueta"  value={tallaSaco}     onChange={setTallaSaco}     disabled={cerrado} />
+              <TallaSelector label="Pantalón"  value={tallaPantalon} onChange={setTallaPantalon} disabled={cerrado} />
+              <TallaSelector label="Camiseta"  value={tallaCamisa}   onChange={setTallaCamisa}   disabled={cerrado} />
+            </div>
+          )}
+
+          {prenda?.es_elegante && !esMantenimiento && !esSudadera && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '16px', background: 'var(--azul-50)', borderRadius: 'var(--r-lg)', border: '1px solid var(--azul-100)' }}>
               <p style={{ fontSize: '0.8rem', color: 'var(--azul-700)', fontWeight: 500 }}>
                 Traje elegante — ingresa cada talla por separado
@@ -160,7 +175,7 @@ function ModalDotacion({ empleado, prendas, dotacion, cerrado, onGuardar, onCerr
             </div>
           )}
 
-          {prenda?.requiere_talla && !prenda.es_elegante && !prenda.es_aseo && !esMantenimiento && (
+          {prenda?.requiere_talla && !prenda.es_elegante && !prenda.es_aseo && !esMantenimiento && !esSudadera && (
             <TallaSelector label="Talla" value={tallaGeneral} onChange={setTallaGeneral} disabled={cerrado} />
           )}
 
@@ -210,6 +225,7 @@ function TarjetaEmpleado({ empleado, prendas, cerrado, onEditar }) {
   const tallasResumen = () => {
     if (!dot) return null
     if (CODIGOS_MANTENIMIENTO.includes(prenda?.codigo)) return `Chq: ${dot.talla_saco} / Cmb: ${dot.talla_camisa} / P: ${dot.talla_pantalon}`
+    if (CODIGOS_SUDADERA.includes(prenda?.codigo))      return `Chq: ${dot.talla_saco} / Pant: ${dot.talla_pantalon} / Cam: ${dot.talla_camisa}`
     if (prenda?.es_elegante) return `C: ${dot.talla_camisa} / S: ${dot.talla_saco} / P: ${dot.talla_pantalon}`
     if (prenda?.es_aseo)     return 'Sin talla'
     return dot.talla_general

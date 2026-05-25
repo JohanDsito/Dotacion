@@ -7,6 +7,7 @@ const router = Router()
 const TALLAS_VALIDAS        = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
 const TALLAS_PANTALON_MANT  = ['30', '32', '34', '36', '38', '40']
 const CODIGOS_MANTENIMIENTO = [6, 8]
+const CODIGOS_SUDADERA      = [7]
 
 // Valida el body según el tipo de prenda
 function validarDotacion(body, prenda) {
@@ -16,11 +17,16 @@ function validarDotacion(body, prenda) {
   if (!body.tipo_prenda_id) errores.push('tipo_prenda_id es requerido')
 
   const esMantenimiento = CODIGOS_MANTENIMIENTO.includes(prenda.codigo)
+  const esSudadera      = CODIGOS_SUDADERA.includes(prenda.codigo)
 
   if (esMantenimiento) {
     if (!TALLAS_VALIDAS.includes(body.talla_saco))           errores.push('talla_chaqueta inválida')
     if (!TALLAS_VALIDAS.includes(body.talla_camisa))         errores.push('talla_camibuso inválida')
     if (!TALLAS_PANTALON_MANT.includes(body.talla_pantalon)) errores.push('talla_pantalon inválida')
+  } else if (esSudadera) {
+    if (!TALLAS_VALIDAS.includes(body.talla_saco))     errores.push('talla_chaqueta inválida')
+    if (!TALLAS_VALIDAS.includes(body.talla_pantalon)) errores.push('talla_pantalon inválida')
+    if (!TALLAS_VALIDAS.includes(body.talla_camisa))   errores.push('talla_camiseta inválida')
   } else if (prenda.es_elegante) {
     if (!TALLAS_VALIDAS.includes(body.talla_camisa))   errores.push('talla_camisa inválida')
     if (!TALLAS_VALIDAS.includes(body.talla_saco))     errores.push('talla_saco inválida')
@@ -90,14 +96,16 @@ router.post('/', verificarToken, formularioAbierto, async (req, res) => {
 
   // Preparar datos limpios (nulls donde no aplica)
   const esMantenimiento = CODIGOS_MANTENIMIENTO.includes(prenda.codigo)
+  const esSudadera      = CODIGOS_SUDADERA.includes(prenda.codigo)
+  const usaTresTallas   = prenda.es_elegante || esMantenimiento || esSudadera
   const payload = {
     empleado_id,
     coordinador_id,
     tipo_prenda_id,
-    talla_camisa:   (prenda.es_elegante || esMantenimiento) ? talla_camisa   : null,
-    talla_saco:     (prenda.es_elegante || esMantenimiento) ? talla_saco     : null,
-    talla_pantalon: (prenda.es_elegante || esMantenimiento) ? talla_pantalon : null,
-    talla_general:  (prenda.requiere_talla && !prenda.es_elegante && !esMantenimiento) ? talla_general : null,
+    talla_camisa:   usaTresTallas ? talla_camisa   : null,
+    talla_saco:     usaTresTallas ? talla_saco     : null,
+    talla_pantalon: usaTresTallas ? talla_pantalon : null,
+    talla_general:  (prenda.requiere_talla && !usaTresTallas) ? talla_general : null,
     incluye_bono_calzado,
     actualizado_en: new Date().toISOString()
   }
