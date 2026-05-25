@@ -4,13 +4,15 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { api } from '../services/api.js'
 
 const TALLAS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
+const TALLAS_PANTALON_MANT = ['30', '32', '34', '36', '38', '40']
+const CODIGOS_MANTENIMIENTO = [6, 8]
 
-function TallaSelector({ label, value, onChange, disabled }) {
+function TallaSelector({ label, value, onChange, disabled, tallas = TALLAS }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
       <label className="input-label">{label} <span className="req">*</span></label>
       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-        {TALLAS.map(t => (
+        {(tallas).map(t => (
           <button
             key={t} type="button" disabled={disabled}
             onClick={() => onChange(t)}
@@ -44,6 +46,7 @@ function ModalDotacion({ empleado, prendas, dotacion, cerrado, onGuardar, onCerr
   const [guardando, setGuardando] = useState(false)
 
   const prenda = prendas.find(p => p.id === tipoPrendaId)
+  const esMantenimiento = prenda && CODIGOS_MANTENIMIENTO.includes(prenda.codigo)
 
   // Calcular prenda sugerida por defecto según tipo_cargo
   useEffect(() => {
@@ -62,7 +65,9 @@ function ModalDotacion({ empleado, prendas, dotacion, cerrado, onGuardar, onCerr
   const handleGuardar = async () => {
     setError('')
     if (!tipoPrendaId) { setError('Selecciona un tipo de prenda'); return }
-    if (prenda?.es_elegante) {
+    if (esMantenimiento) {
+      if (!tallaSaco || !tallaCamisa || !tallaPantalon) { setError('Ingresa las 3 tallas del uniforme de mantenimiento'); return }
+    } else if (prenda?.es_elegante) {
       if (!tallaCamisa || !tallaSaco || !tallaPantalon) { setError('Ingresa las 3 tallas del traje'); return }
     } else if (prenda?.requiere_talla && !prenda.es_aseo) {
       if (!tallaGeneral) { setError('Selecciona la talla'); return }
@@ -133,7 +138,18 @@ function ModalDotacion({ empleado, prendas, dotacion, cerrado, onGuardar, onCerr
           </div>
 
           {/* Tallas según tipo */}
-          {prenda?.es_elegante && (
+          {esMantenimiento && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '16px', background: 'var(--azul-50)', borderRadius: 'var(--r-lg)', border: '1px solid var(--azul-100)' }}>
+              <p style={{ fontSize: '0.8rem', color: 'var(--azul-700)', fontWeight: 500 }}>
+                Mantenimiento — ingresa cada talla por separado
+              </p>
+              <TallaSelector label="Chaqueta"  value={tallaSaco}     onChange={setTallaSaco}     disabled={cerrado} />
+              <TallaSelector label="Camibuso"  value={tallaCamisa}   onChange={setTallaCamisa}   disabled={cerrado} />
+              <TallaSelector label="Pantalón"  value={tallaPantalon} onChange={setTallaPantalon} disabled={cerrado} tallas={TALLAS_PANTALON_MANT} />
+            </div>
+          )}
+
+          {prenda?.es_elegante && !esMantenimiento && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '16px', background: 'var(--azul-50)', borderRadius: 'var(--r-lg)', border: '1px solid var(--azul-100)' }}>
               <p style={{ fontSize: '0.8rem', color: 'var(--azul-700)', fontWeight: 500 }}>
                 Traje elegante — ingresa cada talla por separado
@@ -144,7 +160,7 @@ function ModalDotacion({ empleado, prendas, dotacion, cerrado, onGuardar, onCerr
             </div>
           )}
 
-          {prenda?.requiere_talla && !prenda.es_elegante && !prenda.es_aseo && (
+          {prenda?.requiere_talla && !prenda.es_elegante && !prenda.es_aseo && !esMantenimiento && (
             <TallaSelector label="Talla" value={tallaGeneral} onChange={setTallaGeneral} disabled={cerrado} />
           )}
 
@@ -193,6 +209,7 @@ function TarjetaEmpleado({ empleado, prendas, cerrado, onEditar }) {
 
   const tallasResumen = () => {
     if (!dot) return null
+    if (CODIGOS_MANTENIMIENTO.includes(prenda?.codigo)) return `Chq: ${dot.talla_saco} / Cmb: ${dot.talla_camisa} / P: ${dot.talla_pantalon}`
     if (prenda?.es_elegante) return `C: ${dot.talla_camisa} / S: ${dot.talla_saco} / P: ${dot.talla_pantalon}`
     if (prenda?.es_aseo)     return 'Sin talla'
     return dot.talla_general

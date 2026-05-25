@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { api } from '../services/api.js'
+import logoImg from '../imagenes/images.png'
 
 export default function Login() {
   const { login } = useAuth()
@@ -17,7 +18,6 @@ export default function Login() {
   const [cargando,     setCargando]      = useState(false)
   const [esAdmin,      setEsAdmin]       = useState(false)
 
-  // Cargar dependencias al montar
   useEffect(() => {
     api.dependencias()
       .then(setDependencias)
@@ -27,7 +27,6 @@ export default function Login() {
       })
   }, [])
 
-  // Cargar coordinadores cuando cambia la dependencia
   useEffect(() => {
     if (!depId || esAdmin) {
       setCoordinadores([])
@@ -35,14 +34,10 @@ export default function Login() {
       setCargandoCoord(false)
       return
     }
-
     setCargandoCoord(true)
     api.coordinadores(depId)
       .then(setCoordinadores)
-      .catch((err) => {
-        console.error('❌ Error cargando coordinadores:', err)
-        setCoordinadores([])
-      })
+      .catch(() => setCoordinadores([]))
       .finally(() => setCargandoCoord(false))
   }, [depId, esAdmin])
 
@@ -50,7 +45,6 @@ export default function Login() {
     e.preventDefault()
     setError('')
     setCargando(true)
-
     try {
       const data = await api.login({
         coordinador_id: esAdmin ? undefined : coordId,
@@ -67,95 +61,133 @@ export default function Login() {
   }
 
   return (
-    <div style={{
-      minHeight: '100dvh',
-      display: 'flex',
-      background: 'var(--azul-900)',
-    }}>
-      {/* Panel decorativo izquierdo — solo desktop */}
+    <div style={{ minHeight: '100dvh', display: 'flex', background: 'var(--azul-900)' }}>
+
+      {/* ── Panel izquierdo ────────────────────────────────── */}
       <div className="hide-mobile" style={{
-        width: '42%',
-        background: `linear-gradient(160deg, var(--azul-800) 0%, var(--azul-900) 100%)`,
-        display: 'flex', flexDirection: 'column',
-        justifyContent: 'space-between',
-        padding: '48px',
+        width: '44%',
+        background: 'linear-gradient(160deg, var(--azul-800) 0%, var(--azul-900) 100%)',
+        display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+        padding: '52px 48px',
         position: 'relative', overflow: 'hidden',
       }}>
-        {/* Patrón decorativo */}
+
+        {/* Decoración: cuadrícula sutil */}
         <div style={{
-          position: 'absolute', inset: 0, opacity: 0.04,
-          backgroundImage: `repeating-linear-gradient(
-            45deg,
-            var(--azul-400) 0px, var(--azul-400) 1px,
-            transparent 1px, transparent 40px
-          )`,
+          position: 'absolute', inset: 0, opacity: 0.035,
+          backgroundImage: `repeating-linear-gradient(45deg, var(--azul-400) 0px, var(--azul-400) 1px, transparent 1px, transparent 40px)`,
         }}/>
-        {/* Círculos decorativos */}
+        {/* Círculo dorado top-right */}
         <div style={{
-          position: 'absolute', top: '-80px', right: '-80px',
-          width: '320px', height: '320px', borderRadius: '50%',
-          border: '1.5px solid rgba(200,151,58,0.15)',
+          position: 'absolute', top: '-100px', right: '-100px',
+          width: '360px', height: '360px', borderRadius: '50%',
+          border: '1.5px solid rgba(200,151,58,0.12)',
         }}/>
+        {/* Círculo azul bottom-left */}
         <div style={{
-          position: 'absolute', bottom: '60px', left: '-60px',
-          width: '240px', height: '240px', borderRadius: '50%',
-          border: '1.5px solid rgba(74,124,196,0.2)',
+          position: 'absolute', bottom: '40px', left: '-80px',
+          width: '280px', height: '280px', borderRadius: '50%',
+          border: '1.5px solid rgba(74,124,196,0.15)',
         }}/>
 
-        <div style={{ position: 'relative' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '60px' }}>
-            <div style={{
-              width: '44px', height: '44px', borderRadius: '10px',
-              background: 'rgba(255,255,255,0.08)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
+        {/* ── Contenido principal ── */}
+        <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '0' }}>
+
+          {/* Badge de evento */}
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: '8px',
+            background: 'rgba(200,151,58,0.12)',
+            border: '1px solid rgba(200,151,58,0.25)',
+            borderRadius: '999px',
+            padding: '5px 14px', marginBottom: '20px',
+            width: 'fit-content',
+          }}>
+            <span style={{
+              width: '6px', height: '6px', borderRadius: '50%',
+              background: 'var(--dorado-cl)', flexShrink: 0,
+            }}/>
+            <span style={{
+              fontFamily: 'var(--font-body)', fontSize: '0.68rem', fontWeight: 700,
+              color: 'var(--dorado-cl)', letterSpacing: '0.06em', textTransform: 'uppercase',
             }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 5h6" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-                <path d="M9 12h6M9 16h4" stroke="rgba(200,151,58,0.9)" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
-            </div>
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', fontWeight: 600, color: 'white' }}>
-              PRIMERA ENTREGA DE DOTACION AÑO 2026 
-               PERSONAL QUE DEVENGA HASTA 2SMMLV 
-              CAJA DE COMPENSACION FAMILIAR DE NARIÑO
-
+              PRIMERA ENTREGA DE DOTACION AÑO 2026
             </span>
           </div>
 
+          {/* Título grande */}
           <h1 style={{
-            fontFamily: 'var(--font-display)', fontWeight: 300,
-            fontSize: 'clamp(1.8rem, 3vw, 2.4rem)',
-            color: 'white', lineHeight: 1.2,
-            marginBottom: '16px',
+            fontFamily: 'var(--font-display)', fontWeight: 700,
+            fontSize: 'clamp(1.1rem, 2vw, 1.45rem)',
+            color: 'white', lineHeight: 1.25, marginBottom: '6px',
+            textTransform: 'uppercase', letterSpacing: '0.02em',
           }}>
-            PROCEDIMIENTO PARA DETERMINAR DERECHO, COMPRA, ENTREGA Y USO DE DOTACION DE LOS <br/>
-            <em style={{ fontStyle: 'italic', color: 'var(--dorado-cl)' }}>TRABAJADORES DE LA CAJA DE COMPENSACIÓN FAMILIAR DE NARIÑO Código: PGR-SGH-P-17 </em><br/>
-            Versión: 2 Fecha de Aprobación:12/05/2023
+            CAJA DE COMPENSACION<br/>FAMILIAR DE NARIÑO
           </h1>
-          <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.9rem', lineHeight: 1.7, maxWidth: '320px' }}>
-            Plataforma para el registro y seguimiento de prendas asignadas a cada trabajador por dependencia.
+          <p style={{
+            fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)',
+            lineHeight: 1.5, marginBottom: '28px', textTransform: 'uppercase',
+            letterSpacing: '0.04em',
+          }}>
+            PERSONAL QUE DEVENGA HASTA 2SMMLV
           </p>
+
+          {/* Divider */}
+          <div style={{ height: '1px', background: 'rgba(255,255,255,0.07)', marginBottom: '28px' }}/>
+
+          {/* Info del procedimiento */}
+          <div style={{
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '12px', padding: '16px 18px', marginBottom: '28px',
+          }}>
+            <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.6, marginBottom: '10px' }}>
+              PROCEDIMIENTO PARA DETERMINAR DERECHO, COMPRA, ENTREGA Y USO DE DOTACION DE LOS TRABAJADORES DE LA CAJA DE COMPENSACIÓN FAMILIAR DE NARIÑO
+            </p>
+            <p style={{ fontSize: '0.7rem', color: 'var(--dorado-cl)', marginBottom: '8px', letterSpacing: '0.02em' }}>
+              Código: PGR-SGH-P-17 &nbsp;·&nbsp; Versión: 2 &nbsp;·&nbsp; Fecha de Aprobación: 12/05/2023
+            </p>
+            <p style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.35)', fontStyle: 'italic' }}>
+              Pertenece al Subproceso de Gestión Talento Humano
+            </p>
+          </div>
+
+          {/* Objetivo */}
+          <div style={{ marginBottom: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+              <div style={{ width: '3px', height: '14px', borderRadius: '2px', background: 'var(--dorado)', flexShrink: 0 }}/>
+              <p style={{ fontSize: '0.7rem', fontWeight: 700, color: 'rgba(255,255,255,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                Objetivo
+              </p>
+            </div>
+            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', lineHeight: 1.75, paddingLeft: '11px' }}>
+              Establecer el procedimiento para determinar el derecho, compra, entrega y uso de la dotación para los trabajadores de la Caja de Compensación Familiar de Nariño que garantice el cumplimiento normativo establecido en el Código Sustantivo de Trabajo.
+            </p>
+          </div>
+
+          {/* Alcance */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+              <div style={{ width: '3px', height: '14px', borderRadius: '2px', background: 'var(--azul-400)', flexShrink: 0 }}/>
+              <p style={{ fontSize: '0.7rem', fontWeight: 700, color: 'rgba(255,255,255,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                Alcance
+              </p>
+            </div>
+            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', lineHeight: 1.75, paddingLeft: '11px' }}>
+              El procedimiento aplica a todos los trabajadores que les asista el derecho de dotación teniendo en cuenta lo establecido en el Código Sustantivo de Trabajo.
+            </p>
+          </div>
         </div>
 
+        {/* ── Pie legal ── */}
         <div style={{ position: 'relative' }}>
-          {[
-            { icon: '✓', text: 'Registro por dependencia' },
-            { icon: '✓', text: 'Tallas independientes por prenda' },
-            { icon: '✓', text: 'Exportación a Excel' },
-          ].map((item, i) => (
-            <div key={i} style={{
-              display: 'flex', alignItems: 'center', gap: '10px',
-              marginBottom: '10px', color: 'rgba(255,255,255,0.55)',
-              fontSize: '0.875rem',
-            }}>
-              <span style={{ color: 'var(--dorado)', fontWeight: 600 }}>{item.icon}</span>
-              {item.text}
-            </div>
-          ))}
+          <div style={{ height: '1px', background: 'rgba(255,255,255,0.06)', marginBottom: '18px' }}/>
+          <p style={{ color: 'rgba(255,255,255,0.28)', fontSize: '0.72rem', lineHeight: 1.7 }}>
+            De acuerdo con el cumplimiento de las normas previstas en el Código Penal, Ley 1474 de 2011, en la Ley de Comercio Electrónico (Ley 527 de 1999), en la Ley 1581 de 2012, Ia política de tratamiento de Ia información de la Caja de Compensación Familiar de Nariño y las demás normas que complementen, adicionen, modifiquen o sustituyan.
+          </p>
         </div>
       </div>
 
-      {/* Panel del formulario */}
+      {/* ── Panel del formulario ───────────────────────────── */}
       <div style={{
         flex: 1,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -164,18 +196,30 @@ export default function Login() {
       }}>
         <div style={{ width: '100%', maxWidth: '400px' }} className="anim-fade-up">
 
-          {/* Header móvil */}
-          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          {/* Logo + título */}
+          <div style={{ textAlign: 'center', marginBottom: '36px' }}>
             <div style={{
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              width: '56px', height: '56px', borderRadius: '14px',
-              background: 'var(--azul-900)', marginBottom: '16px',
+              width: '140px', height: '88px',
+              borderRadius: '16px',
+              background: 'var(--azul-900)',
+              marginBottom: '20px',
+              overflow: 'hidden',
+              padding: '10px 14px',
+              boxShadow: '0 4px 20px rgba(10,22,40,0.2)',
             }}>
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 5h6" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
+              <img
+                src={logoImg}
+                alt="Logo Comfamiliar Nariño"
+                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+              />
             </div>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '1.5rem', color: 'var(--azul-900)', marginBottom: '4px' }}>
+
+            <h2 style={{
+              fontFamily: 'var(--font-display)',
+              fontWeight: 600, fontSize: '1.6rem',
+              color: 'var(--azul-900)', marginBottom: '6px',
+            }}>
               Bienvenido
             </h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
@@ -212,12 +256,11 @@ export default function Login() {
             ))}
           </div>
 
+          {/* Formulario */}
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {!esAdmin && (
               <div className="input-group">
-                <label className="input-label">
-                  Dependencia <span className="req">*</span>
-                </label>
+                <label className="input-label">Dependencia <span className="req">*</span></label>
                 <select
                   className="input" value={depId}
                   onChange={e => setDepId(e.target.value)} required={!esAdmin}
@@ -232,9 +275,7 @@ export default function Login() {
 
             {!esAdmin && (
               <div className="input-group">
-                <label className="input-label">
-                  Coordinador <span className="req">*</span>
-                </label>
+                <label className="input-label">Coordinador <span className="req">*</span></label>
                 {cargandoCoord && depId ? (
                   <div style={{
                     display: 'flex', alignItems: 'center', gap: '10px',
@@ -243,17 +284,21 @@ export default function Login() {
                     fontSize: '0.875rem',
                   }}>
                     <span className="spinner" style={{ width: '16px', height: '16px' }}/>
-                    Cargando coordinadores...
+                    Cargando coordinadores…
                   </div>
                 ) : (
                   <select
                     className="input" value={coordId}
-                    onChange={e => setCoordId(e.target.value)} 
+                    onChange={e => setCoordId(e.target.value)}
                     required={!esAdmin}
                     disabled={!depId || coordinadores.length === 0}
                   >
                     <option value="">
-                      {!depId ? 'Selecciona dependencia primero' : coordinadores.length === 0 ? 'No hay coordinadores' : 'Selecciona coordinador'}
+                      {!depId
+                        ? 'Selecciona dependencia primero'
+                        : coordinadores.length === 0
+                          ? 'No hay coordinadores'
+                          : 'Selecciona coordinador'}
                     </option>
                     {coordinadores.map(c => (
                       <option key={c.id} value={c.id}>{c.nombre}</option>
@@ -264,12 +309,10 @@ export default function Login() {
             )}
 
             <div className="input-group">
-              <label className="input-label">
-                Clave de acceso <span className="req">*</span>
-              </label>
+              <label className="input-label">Clave de acceso <span className="req">*</span></label>
               <input
                 className="input" type="password"
-                placeholder={esAdmin ? 'Clave del administrador' : 'Clave de coordinadores'}
+                placeholder={esAdmin ? 'Clave del administrador' : 'Clave del coordinador'}
                 value={clave} onChange={e => setClave(e.target.value)} required
               />
             </div>
