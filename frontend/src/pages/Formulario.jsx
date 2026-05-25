@@ -5,6 +5,7 @@ import { api } from '../services/api.js'
 
 const TALLAS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
 const TALLAS_PANTALON_MANT = ['30', '32', '34', '36', '38', '40']
+const TALLAS_CALZADO_MANT  = ['37', '38', '39', '40', '41', '42']
 const CODIGOS_MANTENIMIENTO = [6, 8]
 const CODIGOS_SUDADERA = [7]
 
@@ -68,7 +69,7 @@ function ModalDotacion({ empleado, prendas, dotacion, cerrado, onGuardar, onCerr
     setError('')
     if (!tipoPrendaId) { setError('Selecciona un tipo de prenda'); return }
     if (esMantenimiento) {
-      if (!tallaSaco || !tallaCamisa || !tallaPantalon) { setError('Ingresa las 3 tallas del uniforme de mantenimiento'); return }
+      if (!tallaSaco || !tallaCamisa || !tallaPantalon || !tallaGeneral) { setError('Ingresa las 4 tallas del uniforme de mantenimiento'); return }
     } else if (esSudadera) {
       if (!tallaSaco || !tallaCamisa || !tallaPantalon) { setError('Ingresa las 3 tallas de la sudadera'); return }
     } else if (prenda?.es_elegante) {
@@ -150,6 +151,7 @@ function ModalDotacion({ empleado, prendas, dotacion, cerrado, onGuardar, onCerr
               <TallaSelector label="Chaqueta"  value={tallaSaco}     onChange={setTallaSaco}     disabled={cerrado} />
               <TallaSelector label="Camibuso"  value={tallaCamisa}   onChange={setTallaCamisa}   disabled={cerrado} />
               <TallaSelector label="Pantalón"  value={tallaPantalon} onChange={setTallaPantalon} disabled={cerrado} tallas={TALLAS_PANTALON_MANT} />
+              <TallaSelector label="Calzado"   value={tallaGeneral}  onChange={setTallaGeneral}  disabled={cerrado} tallas={TALLAS_CALZADO_MANT} />
             </div>
           )}
 
@@ -224,7 +226,7 @@ function TarjetaEmpleado({ empleado, prendas, cerrado, onEditar }) {
 
   const tallasResumen = () => {
     if (!dot) return null
-    if (CODIGOS_MANTENIMIENTO.includes(prenda?.codigo)) return `Chq: ${dot.talla_saco} / Cmb: ${dot.talla_camisa} / P: ${dot.talla_pantalon}`
+    if (CODIGOS_MANTENIMIENTO.includes(prenda?.codigo)) return `Chq: ${dot.talla_saco} / Cmb: ${dot.talla_camisa} / P: ${dot.talla_pantalon} / Calz: ${dot.talla_general}`
     if (CODIGOS_SUDADERA.includes(prenda?.codigo))      return `Chq: ${dot.talla_saco} / Pant: ${dot.talla_pantalon} / Cam: ${dot.talla_camisa}`
     if (prenda?.es_elegante) return `C: ${dot.talla_camisa} / S: ${dot.talla_saco} / P: ${dot.talla_pantalon}`
     if (prenda?.es_aseo)     return 'Sin talla'
