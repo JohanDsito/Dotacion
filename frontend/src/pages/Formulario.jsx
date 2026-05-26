@@ -48,8 +48,8 @@ function ModalDotacion({ empleado, prendas, dotacion, cerrado, onGuardar, onCerr
   const [guardando, setGuardando] = useState(false)
 
   const prenda = prendas.find(p => p.id === tipoPrendaId)
-  const esMantenimiento = prenda && CODIGOS_MANTENIMIENTO.includes(prenda.codigo)
-  const esSudadera      = prenda && CODIGOS_SUDADERA.includes(prenda.codigo)
+  const esMantenimiento = prenda && CODIGOS_MANTENIMIENTO.includes(Number(prenda.codigo))
+  const esSudadera      = prenda && CODIGOS_SUDADERA.includes(Number(prenda.codigo))
 
   // Calcular prenda sugerida por defecto según tipo_cargo
   useEffect(() => {
@@ -226,8 +226,9 @@ function TarjetaEmpleado({ empleado, prendas, cerrado, onEditar }) {
 
   const tallasResumen = () => {
     if (!dot) return null
-    if (CODIGOS_MANTENIMIENTO.includes(prenda?.codigo)) return `Chq: ${dot.talla_saco} / Cmb: ${dot.talla_camisa} / P: ${dot.talla_pantalon} / Calz: ${dot.talla_general}`
-    if (CODIGOS_SUDADERA.includes(prenda?.codigo))      return `Chq: ${dot.talla_saco} / Pant: ${dot.talla_pantalon} / Cam: ${dot.talla_camisa}`
+    const cod = Number(prenda?.codigo)
+    if (CODIGOS_MANTENIMIENTO.includes(cod)) return `Chq: ${dot.talla_saco} / Cmb: ${dot.talla_camisa} / P: ${dot.talla_pantalon} / Calz: ${dot.talla_general}`
+    if (CODIGOS_SUDADERA.includes(cod))      return `Chq: ${dot.talla_saco} / Pant: ${dot.talla_pantalon} / Cam: ${dot.talla_camisa}`
     if (prenda?.es_elegante) return `C: ${dot.talla_camisa} / S: ${dot.talla_saco} / P: ${dot.talla_pantalon}`
     if (prenda?.es_aseo)     return 'Sin talla'
     return dot.talla_general

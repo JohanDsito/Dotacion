@@ -2,6 +2,130 @@ import { useState, useEffect, useCallback } from 'react'
 import Navbar from '../components/Navbar.jsx'
 import { api } from '../services/api.js'
 
+const CODIGOS_MANTENIMIENTO = [6, 8]
+const CODIGOS_SUDADERA = [7]
+
+function ModalDetalle({ fila, onCerrar }) {
+  const cod = Number(fila.codigo_prenda)
+  const esMantenimiento = CODIGOS_MANTENIMIENTO.includes(cod)
+  const esSudadera      = CODIGOS_SUDADERA.includes(cod)
+
+  const tallas = () => {
+    if (esMantenimiento) return [
+      { label: 'Chaqueta',  valor: fila.talla_saco },
+      { label: 'Camibuso',  valor: fila.talla_camisa },
+      { label: 'Pantalón',  valor: fila.talla_pantalon },
+      { label: 'Calzado',   valor: fila.talla_general },
+    ]
+    if (esSudadera) return [
+      { label: 'Chaqueta',  valor: fila.talla_saco },
+      { label: 'Pantalón',  valor: fila.talla_pantalon },
+      { label: 'Camiseta',  valor: fila.talla_camisa },
+    ]
+    if (fila.talla_camisa) return [
+      { label: 'Camisa',    valor: fila.talla_camisa },
+      { label: 'Saco',      valor: fila.talla_saco },
+      { label: 'Pantalón',  valor: fila.talla_pantalon },
+    ]
+    if (fila.talla_general) return [{ label: 'Talla', valor: fila.talla_general }]
+    return []
+  }
+
+  const tallasList = tallas()
+
+  return (
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onCerrar()}>
+      <div className="modal" style={{ maxWidth: '480px' }}>
+        <div className="modal-header">
+          <div>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '1.05rem', color: 'var(--azul-900)' }}>
+              Detalle de dotación
+            </h3>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '2px' }}>{fila.empleado}</p>
+          </div>
+          <button className="btn btn-ghost btn-icon" onClick={onCerrar} aria-label="Cerrar">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M3 3l12 12M15 3L3 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+
+          {/* Datos del empleado */}
+          <div style={{ background: 'var(--azul-50)', borderRadius: 'var(--r-md)', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--azul-600)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '2px' }}>Empleado</p>
+            {[
+              { label: 'Nombre',       valor: fila.empleado },
+              { label: 'Cargo',        valor: fila.cargo },
+              { label: 'Dependencia',  valor: fila.dependencia },
+              { label: 'Subdirección', valor: fila.subdireccion },
+            ].map(({ label, valor }) => (
+              <div key={label} style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', fontSize: '0.875rem' }}>
+                <span style={{ color: 'var(--text-secondary)', flexShrink: 0 }}>{label}</span>
+                <span style={{ color: 'var(--azul-900)', fontWeight: 500, textAlign: 'right' }}>{valor || '—'}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Dotación */}
+          <div style={{ background: 'var(--azul-50)', borderRadius: 'var(--r-md)', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--azul-600)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '2px' }}>Dotación</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', fontSize: '0.875rem' }}>
+              <span style={{ color: 'var(--text-secondary)' }}>Tipo de prenda</span>
+              <span style={{ color: 'var(--azul-900)', fontWeight: 500 }}>
+                <span className="badge badge-blue" style={{ fontSize: '0.78rem' }}>Tipo {fila.codigo_prenda}</span>
+                {' '}{fila.tipo_prenda}
+              </span>
+            </div>
+            {fila.bono_calzado && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', fontSize: '0.875rem' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>Bono calzado</span>
+                <span className="badge badge-gold" style={{ fontSize: '0.78rem' }}>Incluido</span>
+              </div>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', fontSize: '0.875rem' }}>
+              <span style={{ color: 'var(--text-secondary)' }}>Responsable de proceso</span>
+              <span style={{ color: 'var(--azul-900)', fontWeight: 500, textAlign: 'right' }}>{fila.coordinador || '—'}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', fontSize: '0.875rem' }}>
+              <span style={{ color: 'var(--text-secondary)' }}>Fecha de registro</span>
+              <span style={{ color: 'var(--azul-900)', fontWeight: 500 }}>
+                {fila.fecha_registro ? new Date(fila.fecha_registro).toLocaleDateString('es-CO') : '—'}
+              </span>
+            </div>
+          </div>
+
+          {/* Tallas */}
+          {tallasList.length > 0 && (
+            <div style={{ background: 'var(--azul-50)', borderRadius: 'var(--r-md)', padding: '14px 16px' }}>
+              <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--azul-600)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '12px' }}>Tallas</p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '10px' }}>
+                {tallasList.map(({ label, valor }) => (
+                  <div key={label} style={{ background: 'var(--blanco)', borderRadius: 'var(--r-md)', padding: '10px 12px', border: '1px solid var(--azul-100)', textAlign: 'center' }}>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: 500 }}>{label}</div>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--azul-700)', fontFamily: 'var(--font-display)' }}>{valor || '—'}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {fila.sin_talla && (
+            <div className="alerta alerta-info" style={{ fontSize: '0.875rem' }}>
+              Personal de aseo — no requiere talla para esta prenda.
+            </div>
+          )}
+        </div>
+
+        <div className="modal-footer">
+          <button className="btn btn-secondary" onClick={onCerrar}>Cerrar</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function StatCard({ label, valor, sub, color, icono }) {
   return (
     <div style={{
@@ -37,6 +161,7 @@ export default function Dashboard() {
   const [filtroCargo,setFiltroCargo]= useState('')
   const [busqueda,   setBusqueda]   = useState('')
   const [toast,      setToast]      = useState(null)
+  const [detalleRow, setDetalleRow] = useState(null)
 
   const mostrarToast = (msg, tipo = 'success') => {
     setToast({ msg, tipo })
@@ -288,15 +413,21 @@ export default function Dashboard() {
                 <tbody>
                   {filas.map((r, i) => {
                     const tallasTexto = () => {
+                      const cod = Number(r.codigo_prenda)
+                      if (CODIGOS_MANTENIMIENTO.includes(cod)) return `Chq:${r.talla_saco} / Cmb:${r.talla_camisa} / P:${r.talla_pantalon} / Calz:${r.talla_general}`
+                      if (CODIGOS_SUDADERA.includes(cod))      return `Chq:${r.talla_saco} / Pant:${r.talla_pantalon} / Cam:${r.talla_camisa}`
                       if (r.talla_camisa)  return `C:${r.talla_camisa} / S:${r.talla_saco} / P:${r.talla_pantalon}`
                       if (r.talla_general) return r.talla_general
                       if (r.sin_talla)     return '—'
                       return '—'
                     }
                     return (
-                      <tr key={i}>
+                      <tr key={i} onClick={() => setDetalleRow(r)} style={{ cursor: 'pointer' }}>
                         <td>
-                          <div style={{ fontWeight: 500, fontSize: '0.875rem' }}>{r.empleado}</div>
+                          <div style={{ fontWeight: 500, fontSize: '0.875rem', color: 'var(--azul-600)', textDecoration: 'underline', textDecorationColor: 'transparent', transition: 'text-decoration-color 0.15s' }}
+                            onMouseEnter={e => e.currentTarget.style.textDecorationColor = 'var(--azul-400)'}
+                            onMouseLeave={e => e.currentTarget.style.textDecorationColor = 'transparent'}
+                          >{r.empleado}</div>
                           <div className="hide-mobile" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{r.subdireccion}</div>
                         </td>
                         <td style={{ fontSize: '0.875rem' }}>{r.dependencia}</td>
@@ -324,6 +455,11 @@ export default function Dashboard() {
           )}
         </div>
       </main>
+
+      {/* Modal detalle empleado */}
+      {detalleRow && (
+        <ModalDetalle fila={detalleRow} onCerrar={() => setDetalleRow(null)} />
+      )}
 
       {/* Modal de confirmación abrir/cerrar */}
       {accion && (

@@ -77,38 +77,55 @@ router.get('/empleados', async (req, res) => {
     return res.status(400).json({ error: 'dependencia_id es requerido' })
   }
 
-  const { data, error } = await supabase
+  // Consulta 1: empleados de la dependencia
+  const { data: empleados, error: empError } = await supabase
     .from('empleados')
-    .select(`
-      id,
-      nombre,
-      cargo,
-      tipo_cargo,
-      dependencia_id,
-      dotaciones (
-        id,
-        tipo_prenda_id,
-        talla_camisa,
-        talla_saco,
-        talla_pantalon,
-        talla_general,
-        incluye_bono_calzado,
-        actualizado_en,
-        tipos_prenda (codigo, nombre, es_elegante, es_aseo, requiere_talla)
-      )
-    `)
+    .select('id, nombre, cargo, tipo_cargo, dependencia_id')
     .eq('dependencia_id', depId)
     .eq('activo', true)
     .order('nombre')
 
-  if (error) {
-    console.error('❌ Error:', error, error.code, error.message)
-    return res.status(500).json({ error: error.message })
+  if (empError) {
+    console.error('❌ Error empleados:', empError)
+    return res.status(500).json({ error: empError.message })
   }
-  
-  console.log('✅ Se encontraron', data?.length || 0, 'empleados')
-  data?.forEach(emp => {
-    console.log(`  - ${emp.nombre}: ${emp.dotaciones?.length || 0} dotaciones`)
+
+  if (!empleados || empleados.length === 0) {
+    return res.json([])
+  }
+
+  // Consulta 2: dotaciones de esos empleados (consulta directa, sin depender de FK relacional)
+  const empIds = empleados.map(e => e.id)
+  const { data: dotaciones, error: dotError } = await supabase
+    .from('dotaciones')
+    .select(`
+      id,
+      empleado_id,
+      tipo_prenda_id,
+      talla_camisa,
+      talla_saco,
+      talla_pantalon,
+      talla_general,
+      incluye_bono_calzado,
+      actualizado_en,
+      tipos_prenda (codigo, nombre, es_elegante, es_aseo, requiere_talla)
+    `)
+    .in('empleado_id', empIds)
+
+  if (dotError) {
+    console.error('❌ Error dotaciones:', dotError)
+    return res.status(500).json({ error: dotError.message })
+  }
+
+  // Combinar: cada empleado recibe su lista de dotaciones
+  const data = empleados.map(emp => ({
+    ...emp,
+    dotaciones: (dotaciones || []).filter(d => d.empleado_id === emp.id)
+  }))
+
+  console.log('✅ Se encontraron', data.length, 'empleados')
+  data.forEach(emp => {
+    console.log(`  - ${emp.nombre}: ${emp.dotaciones.length} dotaciones`)
   })
   return res.json(data)
 })
