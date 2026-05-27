@@ -8,31 +8,19 @@ const router = Router()
 // DEPENDENCIAS (PÚBLICA - sin requiere token)
 // ─────────────────────────────────────────
 
-// GET /api/datos/dependencias
-// Lista todas las dependencias (para el dropdown de login y filtros)
-// ⚠️ Ruta pública: se necesita para el login
 router.get('/dependencias', async (req, res) => {
-  console.log('📡 Llamada a GET /dependencias')
-  
   const { data, error } = await supabase
     .from('dependencias')
     .select('id, nombre, subdireccion')
     .order('nombre')
 
-  console.log('Respuesta Supabase:', { data, error })
-  
   if (error) {
-    console.error('❌ Error Supabase:', error)
+    console.error('❌ GET /dependencias:', error.message)
     return res.status(500).json({ error: error.message })
   }
-  
-  console.log(`✅ Se encontraron ${data?.length || 0} dependencias`)
   return res.json(data)
 })
 
-// GET /api/datos/coordinadores?dependencia_id=xxx
-// Lista coordinadores de una dependencia específica (para login)
-// ⚠️ Ruta pública: se necesita para el login
 router.get('/coordinadores', async (req, res) => {
   const { dependencia_id } = req.query
 
@@ -47,7 +35,10 @@ router.get('/coordinadores', async (req, res) => {
     .eq('activo', true)
     .order('nombre')
 
-  if (error) return res.status(500).json({ error: error.message })
+  if (error) {
+    console.error('❌ GET /coordinadores:', error.message)
+    return res.status(500).json({ error: error.message })
+  }
   return res.json(data)
 })
 
@@ -60,24 +51,17 @@ router.use(verificarToken)
 // EMPLEADOS
 // ─────────────────────────────────────────
 
-// GET /api/datos/empleados?dependencia_id=xxx
-// Lista empleados de una dependencia específica
-// El coordinador solo ve los de su dependencia
 router.get('/empleados', async (req, res) => {
   const { dependencia_id } = req.query
 
-  // Si es coordinador, solo puede ver su propia dependencia
   const depId = req.usuario.rol === 'coordinador'
     ? req.usuario.dependencia_id
     : dependencia_id
-
-  console.log('📡 GET /empleados - Rol:', req.usuario.rol, 'depId:', depId)
 
   if (!depId) {
     return res.status(400).json({ error: 'dependencia_id es requerido' })
   }
 
-  // Consulta 1: empleados de la dependencia
   const { data: empleados, error: empError } = await supabase
     .from('empleados')
     .select('id, nombre, cargo, tipo_cargo, dependencia_id')
@@ -86,7 +70,7 @@ router.get('/empleados', async (req, res) => {
     .order('nombre')
 
   if (empError) {
-    console.error('❌ Error empleados:', empError)
+    console.error('❌ GET /empleados:', empError.message)
     return res.status(500).json({ error: empError.message })
   }
 
@@ -94,7 +78,6 @@ router.get('/empleados', async (req, res) => {
     return res.json([])
   }
 
-  // Consulta 2: dotaciones de esos empleados (consulta directa, sin depender de FK relacional)
   const empIds = empleados.map(e => e.id)
   const { data: dotaciones, error: dotError } = await supabase
     .from('dotaciones')
@@ -113,20 +96,15 @@ router.get('/empleados', async (req, res) => {
     .in('empleado_id', empIds)
 
   if (dotError) {
-    console.error('❌ Error dotaciones:', dotError)
+    console.error('❌ GET /empleados dotaciones:', dotError.message)
     return res.status(500).json({ error: dotError.message })
   }
 
-  // Combinar: cada empleado recibe su lista de dotaciones
   const data = empleados.map(emp => ({
     ...emp,
     dotaciones: (dotaciones || []).filter(d => d.empleado_id === emp.id)
   }))
 
-  console.log('✅ Se encontraron', data.length, 'empleados')
-  data.forEach(emp => {
-    console.log(`  - ${emp.nombre}: ${emp.dotaciones.length} dotaciones`)
-  })
   return res.json(data)
 })
 
@@ -134,15 +112,16 @@ router.get('/empleados', async (req, res) => {
 // TIPOS DE PRENDA
 // ─────────────────────────────────────────
 
-// GET /api/datos/prendas
-// Lista todas las prendas disponibles
 router.get('/prendas', async (req, res) => {
   const { data, error } = await supabase
     .from('tipos_prenda')
     .select('id, codigo, nombre, requiere_talla, es_elegante, es_aseo, incluye_bono_calzado')
     .order('codigo')
 
-  if (error) return res.status(500).json({ error: error.message })
+  if (error) {
+    console.error('❌ GET /prendas:', error.message)
+    return res.status(500).json({ error: error.message })
+  }
   return res.json(data)
 })
 

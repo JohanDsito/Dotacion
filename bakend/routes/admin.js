@@ -25,7 +25,6 @@ router.get('/reporte', async (req, res) => {
   if (tipo_cargo)     query = query.eq('cargo', tipo_cargo)
 
   const { data, error } = await query
-
   if (error) return res.status(500).json({ error: error.message })
   return res.json(data)
 })
@@ -116,6 +115,36 @@ router.get('/exportar', async (req, res) => {
   res.setHeader('Content-Disposition', `attachment; filename="dotaciones_${fecha}.xlsx"`)
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
   return res.send(buffer)
+})
+
+// ─────────────────────────────────────────
+// RESTABLECER — borra todas las dotaciones para nuevo período
+// ─────────────────────────────────────────
+
+// DELETE /api/admin/restablecer
+router.delete('/restablecer', async (req, res) => {
+  // Eliminar todas las dotaciones
+  const { error: delError } = await supabase
+    .from('dotaciones')
+    .delete()
+    .not('id', 'is', null)
+
+  if (delError) {
+    console.error('❌ Error al restablecer:', delError.message)
+    return res.status(500).json({ error: delError.message })
+  }
+
+  // Cerrar el formulario automáticamente tras el restablecimiento
+  await supabase
+    .from('formulario_estado')
+    .update({
+      cerrado:     true,
+      cerrado_en:  new Date().toISOString(),
+      cerrado_por: req.usuario.nombre
+    })
+    .eq('id', 'global')
+
+  return res.json({ mensaje: 'Formulario restablecido. Todos los registros han sido eliminados.' })
 })
 
 // ─────────────────────────────────────────

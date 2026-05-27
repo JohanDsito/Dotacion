@@ -17,8 +17,8 @@ function validarDotacion(body, prenda) {
   if (!body.empleado_id)    errores.push('empleado_id es requerido')
   if (!body.tipo_prenda_id) errores.push('tipo_prenda_id es requerido')
 
-  const esMantenimiento = CODIGOS_MANTENIMIENTO.includes(prenda.codigo)
-  const esSudadera      = CODIGOS_SUDADERA.includes(prenda.codigo)
+  const esMantenimiento = CODIGOS_MANTENIMIENTO.includes(Number(prenda.codigo))
+  const esSudadera      = CODIGOS_SUDADERA.includes(Number(prenda.codigo))
 
   if (esMantenimiento) {
     if (!TALLAS_VALIDAS.includes(body.talla_saco))            errores.push('talla_chaqueta inválida')
@@ -97,8 +97,8 @@ router.post('/', verificarToken, formularioAbierto, async (req, res) => {
   }
 
   // Preparar datos limpios (nulls donde no aplica)
-  const esMantenimiento = CODIGOS_MANTENIMIENTO.includes(prenda.codigo)
-  const esSudadera      = CODIGOS_SUDADERA.includes(prenda.codigo)
+  const esMantenimiento = CODIGOS_MANTENIMIENTO.includes(Number(prenda.codigo))
+  const esSudadera      = CODIGOS_SUDADERA.includes(Number(prenda.codigo))
   const usaTresTallas   = prenda.es_elegante || esMantenimiento || esSudadera
   const payload = {
     empleado_id,

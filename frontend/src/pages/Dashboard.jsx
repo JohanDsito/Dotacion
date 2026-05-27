@@ -205,8 +205,11 @@ export default function Dashboard() {
   const [filtroDep,  setFiltroDep]  = useState('')
   const [filtroCargo,setFiltroCargo]= useState('')
   const [busqueda,   setBusqueda]   = useState('')
-  const [toast,      setToast]      = useState(null)
-  const [detalleRow, setDetalleRow] = useState(null)
+  const [toast,         setToast]         = useState(null)
+  const [detalleRow,    setDetalleRow]    = useState(null)
+  const [modalReset,    setModalReset]    = useState(false)
+  const [confirmText,   setConfirmText]   = useState('')
+  const [restableciendo,setRestableciendo]= useState(false)
 
   const mostrarToast = (msg, tipo = 'success') => {
     setToast({ msg, tipo })
@@ -237,6 +240,21 @@ export default function Dashboard() {
       mostrarToast(err.message, 'error')
     } finally {
       setExportando(false)
+    }
+  }
+
+  const handleRestablecer = async () => {
+    setRestableciendo(true)
+    try {
+      await api.restablecerFormulario()
+      setModalReset(false)
+      setConfirmText('')
+      mostrarToast('Formulario restablecido — todos los registros eliminados')
+      cargar()
+    } catch (err) {
+      mostrarToast(err.message, 'error')
+    } finally {
+      setRestableciendo(false)
     }
   }
 
@@ -292,6 +310,19 @@ export default function Dashboard() {
           </div>
 
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            {/* Botón restablecer */}
+            <button
+              className="btn btn-secondary"
+              onClick={() => setModalReset(true)}
+              title="Elimina todos los registros para iniciar un nuevo período"
+              style={{ borderColor: 'var(--rojo)', color: 'var(--rojo)' }}
+            >
+              <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                <path d="M1.5 7.5a6 6 0 1 0 6-6 6 6 0 0 0-4.243 1.757M1.5 1.5v3.5h3.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Restablecer
+            </button>
+
             {/* Botón abrir/cerrar formulario */}
             <button
               className={`btn ${resumen?.formulario_cerrado ? 'btn-secondary' : 'btn-danger'}`}
@@ -513,6 +544,70 @@ export default function Dashboard() {
             cargar()
           }}
         />
+      )}
+
+      {/* Modal restablecer formulario */}
+      {modalReset && (
+        <div className="modal-overlay">
+          <div className="modal" style={{ maxWidth: '460px' }}>
+            <div className="modal-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: 'var(--r-md)', background: 'var(--rojo-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <path d="M9 2a7 7 0 100 14A7 7 0 009 2zm0 4v4m0 2v.5" stroke="var(--rojo)" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '1.05rem', color: 'var(--rojo)' }}>
+                  Restablecer formulario
+                </h3>
+              </div>
+            </div>
+            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div className="alerta alerta-error">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style={{ flexShrink: 0 }}>
+                  <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 4a.75.75 0 01.75.75v3a.75.75 0 01-1.5 0v-3A.75.75 0 018 5zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+                </svg>
+                <div>
+                  <strong>Esta acción eliminará TODOS los registros de dotación</strong> y no se puede deshacer. El formulario quedará cerrado listo para un nuevo período.
+                </div>
+              </div>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                Asegúrate de haber exportado el Excel con los datos del período actual antes de continuar.
+              </p>
+              <div className="input-group">
+                <label className="input-label">
+                  Escribe <strong style={{ color: 'var(--rojo)' }}>RESTABLECER</strong> para confirmar
+                </label>
+                <input
+                  className="input"
+                  value={confirmText}
+                  onChange={e => setConfirmText(e.target.value)}
+                  placeholder="RESTABLECER"
+                  autoComplete="off"
+                  style={{ borderColor: confirmText === 'RESTABLECER' ? 'var(--verde)' : undefined }}
+                />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button
+                className="btn btn-secondary"
+                onClick={() => { setModalReset(false); setConfirmText('') }}
+                disabled={restableciendo}
+              >
+                Cancelar
+              </button>
+              <button
+                className="btn btn-danger"
+                onClick={handleRestablecer}
+                disabled={confirmText !== 'RESTABLECER' || restableciendo}
+              >
+                {restableciendo
+                  ? <><span className="spinner" style={{ width: '15px', height: '15px' }}/> Restableciendo…</>
+                  : 'Confirmar restablecimiento'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Modal de confirmación abrir/cerrar */}

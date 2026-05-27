@@ -1,6 +1,8 @@
 import cors from 'cors'
 import 'dotenv/config'
 import express from 'express'
+import helmet from 'helmet'
+import rateLimit from 'express-rate-limit'
 
 import adminRoutes from './routes/admin.js'
 import authRoutes from './routes/auth.js'
@@ -10,9 +12,10 @@ import dotacionesRoutes from './routes/dotaciones.js'
 const app  = express()
 const PORT = process.env.PORT || 3001
 
+// ── Cabeceras de seguridad HTTP ─────────────────────────────
+app.use(helmet())
+
 // ── Origins permitidos ───────────────────────────────────────
-// En producción, define FRONTEND_URL en tu .env (ej: https://tu-app.vercel.app)
-// Puedes agregar varios separados por coma: https://a.vercel.app,https://b.vercel.app
 const originsPermitidos = [
   'http://localhost:5173',
   'http://localhost:3000',
@@ -21,22 +24,30 @@ const originsPermitidos = [
     : [])
 ]
 
-console.log('🌐 Origins CORS permitidos:', originsPermitidos)
-
 // ── Middlewares globales ────────────────────────────────────
 app.use(cors({
   origin: (origin, callback) => {
-    // Permitir requests sin origin (ej: Postman, curl, mobile apps)
     if (!origin) return callback(null, true)
     if (originsPermitidos.includes(origin)) return callback(null, true)
-    console.warn('⚠️  CORS bloqueado para origin:', origin)
     callback(new Error(`CORS: origin no permitido → ${origin}`))
   },
   credentials: true
 }))
-app.use(express.json())
+app.use(express.json({ limit: '50kb' }))
+
+// ── Rate limiting: login ────────────────────────────────────
+// Máx 10 intentos de login por IP cada 15 minutos
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiados intentos de acceso. Espera 15 minutos.' },
+  skipSuccessfulRequests: true,
+})
 
 // ── Rutas ───────────────────────────────────────────────────
+app.use('/api/auth/login', loginLimiter)
 app.use('/api/auth',       authRoutes)
 app.use('/api/datos',      datosRoutes)
 app.use('/api/dotaciones', dotacionesRoutes)
@@ -68,6 +79,13 @@ app.use((err, req, res, next) => {
 
 // ── Iniciar servidor ─────────────────────────────────────────
 app.listen(PORT, () => {
-  console.log(`\n✓ Servidor corriendo en http://localhost:${PORT}`)
-  console.log(`✓ Health check: http://localhost:${PORT}/api/health\n`)
+  console.log(`✓ Servidor corriendo en puerto ${PORT}`)
+
+  // Ping cada 10 min para evitar cold start en Railway
+  if (process.env.RAILWAY_PUBLIC_DOMAIN) {
+    const url = `https://${process.env.RAILWAY_PUBLIC_DOMAIN}/api/health`
+    setInterval(() => {
+      fetch(url).catch(() => {})
+    }, 10 * 60 * 1000)
+  }
 })
