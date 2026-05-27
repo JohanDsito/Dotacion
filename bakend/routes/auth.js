@@ -18,8 +18,16 @@ router.post('/login', async (req, res) => {
     return res.status(400).json({ error: 'Clave es requerida' })
   }
 
+  // Determinar el tipo de intento por los campos enviados:
+  // coordinador_id presente → intento coordinador; ausente → intento admin
+  const esIntentoCoordinador = !!coordinador_id
+
   // --- Login administrador ---
-  if (clave === process.env.CLAVE_ADMIN) {
+  if (!esIntentoCoordinador) {
+    if (clave !== process.env.CLAVE_ADMIN) {
+      console.log('❌ Clave de admin incorrecta')
+      return res.status(401).json({ error: 'Clave incorrecta' })
+    }
     console.log('✅ Login ADMIN exitoso')
     const token = jwt.sign(
       { rol: 'admin', nombre: nombre || 'Administrador' },
@@ -31,13 +39,8 @@ router.post('/login', async (req, res) => {
 
   // --- Login coordinador ---
   if (clave !== process.env.CLAVE_COORDINADORES) {
-    console.log('❌ Clave incorrecta')
+    console.log('❌ Clave de coordinador incorrecta')
     return res.status(401).json({ error: 'Clave incorrecta' })
-  }
-
-  if (!coordinador_id) {
-    console.log('❌ No seleccionó coordinador')
-    return res.status(400).json({ error: 'Selecciona tu coordinador' })
   }
 
   if (!dependencia_id) {
