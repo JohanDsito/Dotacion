@@ -119,6 +119,23 @@ router.get('/exportar', async (req, res) => {
 })
 
 // ─────────────────────────────────────────
+// ELIMINAR DOTACIÓN (admin override — sin requerir formulario abierto)
+// ─────────────────────────────────────────
+
+// DELETE /api/admin/dotacion/:empleado_id
+router.delete('/dotacion/:empleado_id', async (req, res) => {
+  const { empleado_id } = req.params
+
+  const { error } = await supabase
+    .from('dotaciones')
+    .delete()
+    .eq('empleado_id', empleado_id)
+
+  if (error) return res.status(500).json({ error: error.message })
+  return res.json({ mensaje: 'Dotación eliminada' })
+})
+
+// ─────────────────────────────────────────
 // CONTROL DEL FORMULARIO
 // ─────────────────────────────────────────
 

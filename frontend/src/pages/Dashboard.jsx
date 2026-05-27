@@ -5,7 +5,19 @@ import { api } from '../services/api.js'
 const CODIGOS_MANTENIMIENTO = [6, 8]
 const CODIGOS_SUDADERA = [7]
 
-function ModalDetalle({ fila, onCerrar }) {
+function ModalDetalle({ fila, onCerrar, onEliminar }) {
+  const [confirmando, setConfirmando] = useState(false)
+  const [eliminando,  setEliminando]  = useState(false)
+
+  const handleEliminar = async () => {
+    setEliminando(true)
+    try {
+      await onEliminar()
+    } finally {
+      setEliminando(false)
+    }
+  }
+
   const cod = Number(fila.codigo_prenda)
   const esMantenimiento = CODIGOS_MANTENIMIENTO.includes(cod)
   const esSudadera      = CODIGOS_SUDADERA.includes(cod)
@@ -118,8 +130,41 @@ function ModalDetalle({ fila, onCerrar }) {
           )}
         </div>
 
-        <div className="modal-footer">
-          <button className="btn btn-secondary" onClick={onCerrar}>Cerrar</button>
+        <div className="modal-footer" style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+          {!confirmando ? (
+            <>
+              {fila.empleado_id && (
+                <button className="btn btn-danger btn-sm" onClick={() => setConfirmando(true)}>
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M2 3.5h10M5.5 3.5V2.5h3v1M6 6v4M8 6v4M3 3.5l.5 8h7l.5-8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  Eliminar registro
+                </button>
+              )}
+              <button className="btn btn-secondary" onClick={onCerrar} style={{ marginLeft: 'auto' }}>Cerrar</button>
+            </>
+          ) : (
+            <>
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="var(--rojo)">
+                  <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 4a.75.75 0 01.75.75v3a.75.75 0 01-1.5 0v-3A.75.75 0 018 5zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+                </svg>
+                <span style={{ fontSize: '0.875rem', color: 'var(--rojo)', fontWeight: 500 }}>
+                  ¿Confirmar eliminación?
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="btn btn-secondary btn-sm" onClick={() => setConfirmando(false)} disabled={eliminando}>
+                  Cancelar
+                </button>
+                <button className="btn btn-danger btn-sm" onClick={handleEliminar} disabled={eliminando}>
+                  {eliminando
+                    ? <><span className="spinner" style={{ width: '14px', height: '14px' }}/> Eliminando…</>
+                    : 'Sí, eliminar'}
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -458,7 +503,16 @@ export default function Dashboard() {
 
       {/* Modal detalle empleado */}
       {detalleRow && (
-        <ModalDetalle fila={detalleRow} onCerrar={() => setDetalleRow(null)} />
+        <ModalDetalle
+          fila={detalleRow}
+          onCerrar={() => setDetalleRow(null)}
+          onEliminar={async () => {
+            await api.eliminarDotacionAdmin(detalleRow.empleado_id)
+            setDetalleRow(null)
+            mostrarToast('Registro eliminado — el responsable puede volver a ingresarlo')
+            cargar()
+          }}
+        />
       )}
 
       {/* Modal de confirmación abrir/cerrar */}

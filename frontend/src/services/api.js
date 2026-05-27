@@ -52,6 +52,7 @@ export const api = {
     a.click()
     URL.revokeObjectURL(url)
   },
-  cerrarFormulario:  () => req('PATCH', '/admin/formulario/cerrar'),
-  abrirFormulario:   () => req('PATCH', '/admin/formulario/abrir'),
+  cerrarFormulario:       () => req('PATCH', '/admin/formulario/cerrar'),
+  abrirFormulario:        () => req('PATCH', '/admin/formulario/abrir'),
+  eliminarDotacionAdmin:  (empId) => req('DELETE', `/admin/dotacion/${empId}`),
 }
