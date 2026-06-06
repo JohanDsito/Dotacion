@@ -8,6 +8,7 @@ import adminRoutes from './routes/admin.js'
 import authRoutes from './routes/auth.js'
 import datosRoutes from './routes/datos.js'
 import dotacionesRoutes from './routes/dotaciones.js'
+import gestionRoutes from './routes/gestion.js'
 
 const app  = express()
 const PORT = process.env.PORT || 3001
@@ -52,6 +53,7 @@ app.use('/api/auth',       authRoutes)
 app.use('/api/datos',      datosRoutes)
 app.use('/api/dotaciones', dotacionesRoutes)
 app.use('/api/admin',      adminRoutes)
+app.use('/api/gestion',    gestionRoutes)
 
 // ── Health check ────────────────────────────────────────────
 app.get('/api/health', (req, res) => {

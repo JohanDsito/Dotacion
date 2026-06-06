@@ -56,4 +56,24 @@ export const api = {
   abrirFormulario:        () => req('PATCH', '/admin/formulario/abrir'),
   eliminarDotacionAdmin:  (empId) => req('DELETE', `/admin/dotacion/${empId}`),
   restablecerFormulario:  ()     => req('DELETE', '/admin/restablecer'),
+
+  // Gestión administrativa (CRUD)
+  gestion: {
+    // Empleados
+    empleados:        (params) => req('GET',  `/gestion/empleados?${new URLSearchParams(params || {})}`),
+    crearEmpleado:    (body)   => req('POST', '/gestion/empleados', body),
+    moverEmpleado:    (id, dependencia_id) => req('PATCH', `/gestion/empleados/${id}/dependencia`, { dependencia_id }),
+    eliminarEmpleado: (id)     => req('DELETE', `/gestion/empleados/${id}`),
+
+    // Dependencias
+    dependencias:        ()    => req('GET',  '/gestion/dependencias'),
+    fusionarDependencia: (id, dependencia_destino_id) => req('PATCH', `/gestion/dependencias/${id}/fusionar`, { dependencia_destino_id }),
+    eliminarDependencia: (id)  => req('DELETE', `/gestion/dependencias/${id}`),
+
+    // Coordinadores
+    coordinadores:       ()    => req('GET',  '/gestion/coordinadores'),
+    crearCoordinador:    (body) => req('POST', '/gestion/coordinadores', body),
+    moverCoordinador:    (id, dependencia_id) => req('PATCH', `/gestion/coordinadores/${id}/dependencia`, { dependencia_id }),
+    eliminarCoordinador: (id, forzar = false) => req('DELETE', `/gestion/coordinadores/${id}`, { forzar }),
+  },
 }

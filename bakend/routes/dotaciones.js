@@ -5,7 +5,7 @@ import { formularioAbierto, verificarToken } from '../middleware/auth.js'
 const router = Router()
 
 const TALLAS_VALIDAS        = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
-const TALLAS_PANTALON_MANT  = ['30', '32', '34', '36', '38', '40']
+const TALLAS_PANTALON       = ['28', '30', '32', '34', '36', '38', '40']
 const TALLAS_CALZADO_MANT   = ['37', '38', '39', '40', '41', '42']
 const CODIGOS_MANTENIMIENTO = [6, 8]
 const CODIGOS_SUDADERA      = [7]
@@ -23,16 +23,16 @@ function validarDotacion(body, prenda) {
   if (esMantenimiento) {
     if (!TALLAS_VALIDAS.includes(body.talla_saco))            errores.push('talla_chaqueta inválida')
     if (!TALLAS_VALIDAS.includes(body.talla_camisa))          errores.push('talla_camibuso inválida')
-    if (!TALLAS_PANTALON_MANT.includes(body.talla_pantalon))  errores.push('talla_pantalon inválida')
+    if (!TALLAS_PANTALON.includes(body.talla_pantalon))       errores.push('talla_pantalon inválida')
     if (!TALLAS_CALZADO_MANT.includes(body.talla_general))    errores.push('talla_calzado inválida')
   } else if (esSudadera) {
     if (!TALLAS_VALIDAS.includes(body.talla_saco))     errores.push('talla_chaqueta inválida')
-    if (!TALLAS_VALIDAS.includes(body.talla_pantalon)) errores.push('talla_pantalon inválida')
+    if (!TALLAS_PANTALON.includes(body.talla_pantalon)) errores.push('talla_pantalon inválida')
     if (!TALLAS_VALIDAS.includes(body.talla_camisa))   errores.push('talla_camiseta inválida')
   } else if (prenda.es_elegante) {
     if (!TALLAS_VALIDAS.includes(body.talla_camisa))   errores.push('talla_camisa inválida')
     if (!TALLAS_VALIDAS.includes(body.talla_saco))     errores.push('talla_saco inválida')
-    if (!TALLAS_VALIDAS.includes(body.talla_pantalon)) errores.push('talla_pantalon inválida')
+    if (!TALLAS_PANTALON.includes(body.talla_pantalon)) errores.push('talla_pantalon inválida')
   } else if (prenda.requiere_talla && !prenda.es_aseo) {
     if (!TALLAS_VALIDAS.includes(body.talla_general))  errores.push('talla_general inválida')
   }

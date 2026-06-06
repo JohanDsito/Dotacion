@@ -3,8 +3,8 @@ import Navbar from '../components/Navbar.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { api } from '../services/api.js'
 
-const TALLAS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
-const TALLAS_PANTALON_MANT = ['30', '32', '34', '36', '38', '40']
+const TALLAS          = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
+const TALLAS_PANTALON = ['28', '30', '32', '34', '36', '38', '40']
 const TALLAS_CALZADO_MANT  = ['37', '38', '39', '40', '41', '42']
 const CODIGOS_MANTENIMIENTO = [6, 8]
 const CODIGOS_SUDADERA = [7]
@@ -150,7 +150,7 @@ function ModalDotacion({ empleado, prendas, dotacion, cerrado, onGuardar, onCerr
               </p>
               <TallaSelector label="Chaqueta"  value={tallaSaco}     onChange={setTallaSaco}     disabled={cerrado} />
               <TallaSelector label="Camibuso"  value={tallaCamisa}   onChange={setTallaCamisa}   disabled={cerrado} />
-              <TallaSelector label="Pantalón"  value={tallaPantalon} onChange={setTallaPantalon} disabled={cerrado} tallas={TALLAS_PANTALON_MANT} />
+              <TallaSelector label="Pantalón"  value={tallaPantalon} onChange={setTallaPantalon} disabled={cerrado} tallas={TALLAS_PANTALON} />
               <TallaSelector label="Calzado"   value={tallaGeneral}  onChange={setTallaGeneral}  disabled={cerrado} tallas={TALLAS_CALZADO_MANT} />
             </div>
           )}
@@ -161,7 +161,7 @@ function ModalDotacion({ empleado, prendas, dotacion, cerrado, onGuardar, onCerr
                 Sudadera — ingresa cada talla por separado
               </p>
               <TallaSelector label="Chaqueta"  value={tallaSaco}     onChange={setTallaSaco}     disabled={cerrado} />
-              <TallaSelector label="Pantalón"  value={tallaPantalon} onChange={setTallaPantalon} disabled={cerrado} />
+              <TallaSelector label="Pantalón"  value={tallaPantalon} onChange={setTallaPantalon} disabled={cerrado} tallas={TALLAS_PANTALON} />
               <TallaSelector label="Camiseta"  value={tallaCamisa}   onChange={setTallaCamisa}   disabled={cerrado} />
             </div>
           )}
@@ -173,7 +173,7 @@ function ModalDotacion({ empleado, prendas, dotacion, cerrado, onGuardar, onCerr
               </p>
               <TallaSelector label="Camisa"   value={tallaCamisa}   onChange={setTallaCamisa}   disabled={cerrado} />
               <TallaSelector label="Saco"     value={tallaSaco}     onChange={setTallaSaco}     disabled={cerrado} />
-              <TallaSelector label="Pantalón" value={tallaPantalon} onChange={setTallaPantalon} disabled={cerrado} />
+              <TallaSelector label="Pantalón" value={tallaPantalon} onChange={setTallaPantalon} disabled={cerrado} tallas={TALLAS_PANTALON} />
             </div>
           )}
 

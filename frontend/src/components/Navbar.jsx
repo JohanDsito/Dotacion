@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 
 const LogoIcon = () => (
@@ -16,6 +16,7 @@ const LogoIcon = () => (
 export default function Navbar() {
   const { usuario, logout } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
 
   const handleLogout = () => {
@@ -24,6 +25,14 @@ export default function Navbar() {
   }
 
   if (!usuario) return null
+
+  // Enlaces de navegación del administrador
+  const enlacesAdmin = usuario.rol === 'admin'
+    ? [
+        { to: '/dashboard', label: 'Reportes' },
+        { to: '/gestion',   label: 'Gestión' },
+      ]
+    : []
 
   return (
     <>
@@ -55,6 +64,29 @@ export default function Navbar() {
 
         {/* Info + Logout — desktop */}
         <div className="hide-mobile" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          {/* Enlaces de navegación del admin */}
+          {enlacesAdmin.length > 0 && (
+            <div style={{ display: 'flex', gap: '4px', marginRight: '4px' }}>
+              {enlacesAdmin.map(({ to, label }) => {
+                const activo = location.pathname === to
+                return (
+                  <Link
+                    key={to}
+                    to={to}
+                    style={{
+                      padding: '7px 14px', borderRadius: 'var(--r-md)',
+                      fontSize: '0.875rem', fontWeight: 500, textDecoration: 'none',
+                      color: activo ? 'white' : 'rgba(255,255,255,0.6)',
+                      background: activo ? 'var(--azul-600)' : 'transparent',
+                      transition: 'background 0.15s, color 0.15s',
+                    }}
+                  >
+                    {label}
+                  </Link>
+                )
+              })}
+            </div>
+          )}
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: '0.875rem', fontWeight: 500, color: 'white' }}>{usuario.nombre}</div>
             <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.45)' }}>
@@ -113,6 +145,29 @@ export default function Navbar() {
           <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.8rem', marginBottom: '16px' }}>
             {usuario.rol === 'admin' ? 'Administrador' : `Responsable de proceso · ${usuario.dependencia_nombre}`}
           </div>
+          {/* Enlaces de navegación del admin (móvil) */}
+          {enlacesAdmin.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '16px' }}>
+              {enlacesAdmin.map(({ to, label }) => {
+                const activo = location.pathname === to
+                return (
+                  <Link
+                    key={to}
+                    to={to}
+                    onClick={() => setMenuOpen(false)}
+                    style={{
+                      padding: '10px 14px', borderRadius: 'var(--r-md)',
+                      fontSize: '0.9rem', fontWeight: 500, textDecoration: 'none',
+                      color: 'white',
+                      background: activo ? 'var(--azul-600)' : 'rgba(255,255,255,0.06)',
+                    }}
+                  >
+                    {label}
+                  </Link>
+                )
+              })}
+            </div>
+          )}
           <button className="btn btn-secondary btn-full" onClick={handleLogout}>
             Cerrar sesión
           </button>

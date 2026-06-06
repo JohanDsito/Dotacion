@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext.jsx'
 import Login from './pages/Login.jsx'
 import Formulario from './pages/Formulario.jsx'
 import Dashboard from './pages/Dashboard.jsx'
+import Gestion from './pages/Gestion.jsx'
 
 function RutaProtegida({ children, soloAdmin }) {
   const { usuario } = useAuth()
@@ -23,6 +24,9 @@ function AppRoutes() {
       } />
       <Route path="/dashboard" element={
         <RutaProtegida soloAdmin><Dashboard /></RutaProtegida>
+      } />
+      <Route path="/gestion" element={
+        <RutaProtegida soloAdmin><Gestion /></RutaProtegida>
       } />
       <Route path="*" element={
         <Navigate to={usuario ? (usuario.rol === 'admin' ? '/dashboard' : '/formulario') : '/login'} replace />

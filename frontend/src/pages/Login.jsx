@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
-import { api } from '../services/api.js'
 import logoImg from '../imagenes/images.png'
+import { api } from '../services/api.js'
 
 /* ── Contenido informativo reutilizado en desktop y en el drawer mobile ── */
 function InfoProcedimiento() {
@@ -20,7 +20,7 @@ function InfoProcedimiento() {
       }}>
         <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--dorado-cl)', flexShrink: 0 }}/>
         <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.68rem', fontWeight: 700, color: 'var(--dorado-cl)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-          PRIMERA ENTREGA DE DOTACION AÑO 2026
+          SEGUNDA ENTREGA DE DOTACION AÑO 2026
         </span>
       </div>
 
