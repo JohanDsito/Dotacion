@@ -3,13 +3,18 @@ import Navbar from '../components/Navbar.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { api } from '../services/api.js'
 
-const TALLAS          = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
+// Tallas de camisa y saco — aplica para hombre, mujer y sudadera
+const TALLAS_CAMISA_SACO = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
+// Tallas de pantalón para traje hombre (código 1) y uniformes mixtos
+const TALLAS_PANTALON_HOMBRE = ['20','22','24','26','28','30','32','34','36','38','40']
+// Tallas de pantalón para traje dama (código 3)
+const TALLAS_PANTALON_MUJER  = ['6','8','10','12','14','16','18','20','22']
 const TALLAS_PANTALON = ['28', '30', '32', '34', '36', '38', '40']
 const TALLAS_CALZADO_MANT  = ['37', '38', '39', '40', '41', '42']
 const CODIGOS_MANTENIMIENTO = [6, 8]
 const CODIGOS_SUDADERA = [7]
 
-function TallaSelector({ label, value, onChange, disabled, tallas = TALLAS }) {
+function TallaSelector({ label, value, onChange, disabled, tallas = TALLAS_CAMISA_SACO }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
       <label className="input-label">{label} <span className="req">*</span></label>
@@ -171,9 +176,10 @@ function ModalDotacion({ empleado, prendas, dotacion, cerrado, onGuardar, onCerr
               <p style={{ fontSize: '0.8rem', color: 'var(--azul-700)', fontWeight: 500 }}>
                 Traje elegante — ingresa cada talla por separado
               </p>
-              <TallaSelector label="Camisa"   value={tallaCamisa}   onChange={setTallaCamisa}   disabled={cerrado} />
-              <TallaSelector label="Saco"     value={tallaSaco}     onChange={setTallaSaco}     disabled={cerrado} />
-              <TallaSelector label="Pantalón" value={tallaPantalon} onChange={setTallaPantalon} disabled={cerrado} tallas={TALLAS_PANTALON} />
+              <TallaSelector label="Camisa"   value={tallaCamisa}   onChange={setTallaCamisa}   disabled={cerrado} tallas={TALLAS_CAMISA_SACO} />
+              <TallaSelector label="Saco"     value={tallaSaco}     onChange={setTallaSaco}     disabled={cerrado} tallas={TALLAS_CAMISA_SACO} />
+              <TallaSelector label="Pantalón" value={tallaPantalon} onChange={setTallaPantalon} disabled={cerrado}
+                tallas={Number(prenda.codigo) === 3 ? TALLAS_PANTALON_MUJER : TALLAS_PANTALON_HOMBRE} />
             </div>
           )}
 
