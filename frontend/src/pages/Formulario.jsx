@@ -6,7 +6,7 @@ import { api } from '../services/api.js'
 // Tallas de camisa y saco — aplica para hombre, mujer y sudadera
 const TALLAS_CAMISA_SACO = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
 // Tallas de pantalón para traje hombre (código 1) y uniformes mixtos
-const TALLAS_PANTALON_HOMBRE = ['20','22','24','26','28','30','32','34','36','38','40']
+const TALLAS_PANTALON_HOMBRE = ['28','30','32','34','36','38','40']
 // Tallas de pantalón para traje dama (código 3)
 const TALLAS_PANTALON_MUJER  = ['6','8','10','12','14','16','18','20','22']
 const TALLAS_PANTALON = ['28', '30', '32', '34', '36', '38', '40']
