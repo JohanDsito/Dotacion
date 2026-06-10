@@ -9,19 +9,32 @@ function InfoProcedimiento() {
   return (
     <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: '0' }}>
 
-      {/* Badge */}
+      {/* Banner SEGUNDA ENTREGA */}
       <div style={{
-        display: 'inline-flex', alignItems: 'center', gap: '8px',
-        background: 'rgba(200,151,58,0.12)',
-        border: '1px solid rgba(200,151,58,0.25)',
-        borderRadius: '999px',
-        padding: '5px 14px', marginBottom: '20px',
-        width: 'fit-content',
+        display: 'flex', alignItems: 'center', gap: '16px',
+        background: 'linear-gradient(135deg, rgba(200,151,58,0.28) 0%, rgba(200,151,58,0.10) 100%)',
+        border: '1.5px solid rgba(200,151,58,0.65)',
+        borderRadius: '14px',
+        padding: '16px 20px', marginBottom: '24px',
+        boxShadow: '0 4px 32px rgba(200,151,58,0.22)',
+        position: 'relative', overflow: 'hidden',
       }}>
-        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--dorado-cl)', flexShrink: 0 }}/>
-        <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.68rem', fontWeight: 700, color: 'var(--dorado-cl)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-          SEGUNDA ENTREGA DE DOTACION AÑO 2026
-        </span>
+        {/* Glow decorativo */}
+        <div style={{ position: 'absolute', top: '-30px', right: '-30px', width: '140px', height: '140px', borderRadius: '50%', background: 'rgba(200,151,58,0.1)', pointerEvents: 'none' }}/>
+        {/* Indicador live con anillo pulsante */}
+        <div style={{ position: 'relative', width: '18px', height: '18px', flexShrink: 0 }}>
+          <span style={{ position: 'absolute', inset: '4px', borderRadius: '50%', background: 'var(--dorado-cl)', animation: 'pulso 2s ease-in-out infinite' }}/>
+          <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'rgba(200,151,58,0.40)', animation: 'pulsoRing 2s ease-in-out infinite' }}/>
+        </div>
+        {/* Texto */}
+        <div style={{ flex: 1, position: 'relative' }}>
+          <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.61rem', fontWeight: 700, color: 'rgba(200,151,58,0.80)', letterSpacing: '0.13em', textTransform: 'uppercase', marginBottom: '4px' }}>
+            Entrega activa
+          </p>
+          <p style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: 700, color: 'var(--dorado-cl)', letterSpacing: '0.02em', textTransform: 'uppercase', lineHeight: 1.2 }}>
+            Segunda entrega de dotación · 2026
+          </p>
+        </div>
       </div>
 
       {/* Título */}
@@ -195,6 +208,25 @@ export default function Login() {
             </p>
           </div>
 
+          {/* Badge SEGUNDA ENTREGA — solo móvil, visible sin abrir el drawer */}
+          <div
+            className="show-mobile"
+            style={{
+              alignItems: 'center', justifyContent: 'center', gap: '10px',
+              background: 'var(--azul-900)',
+              border: '1.5px solid rgba(200,151,58,0.55)',
+              borderRadius: 'var(--r-lg)',
+              padding: '12px 18px',
+              marginBottom: '16px',
+              boxShadow: '0 0 24px rgba(200,151,58,0.14)',
+            }}
+          >
+            <span style={{ width: '9px', height: '9px', borderRadius: '50%', background: 'var(--dorado-cl)', flexShrink: 0, animation: 'pulso 2s ease-in-out infinite' }}/>
+            <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.78rem', fontWeight: 700, color: 'var(--dorado-cl)', letterSpacing: '0.05em', textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.3 }}>
+              SEGUNDA ENTREGA DE DOTACION AÑO 2026
+            </span>
+          </div>
+
           {/* Botón "Ver información" — solo móvil */}
           <button
             type="button"
@@ -305,6 +337,17 @@ export default function Login() {
           </form>
         </div>
       </div>
+
+      <style>{`
+        @keyframes pulso {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50%       { opacity: 0.35; transform: scale(0.7); }
+        }
+        @keyframes pulsoRing {
+          0%        { transform: scale(1); opacity: 0.5; }
+          70%, 100% { transform: scale(2.2); opacity: 0; }
+        }
+      `}</style>
 
       {/* ── Drawer de información — solo móvil ── */}
       {infoAbierta && (
