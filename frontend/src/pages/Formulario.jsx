@@ -14,6 +14,200 @@ const TALLAS_CALZADO_MANT  = ['37', '38', '39', '40', '41', '42']
 const CODIGOS_MANTENIMIENTO = [6, 8]
 const CODIGOS_SUDADERA = [7]
 
+/* ── Botón "Guía de tallas" reutilizable ── */
+function BtnGuia({ onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: '5px',
+        padding: '5px 12px',
+        background: 'rgba(200,151,58,0.13)',
+        border: '1.5px solid rgba(200,151,58,0.55)',
+        borderRadius: '999px',
+        cursor: 'pointer',
+        color: 'var(--dorado-cl)',
+        fontFamily: 'var(--font-body)', fontSize: '0.74rem', fontWeight: 700,
+        whiteSpace: 'nowrap', flexShrink: 0,
+        letterSpacing: '0.01em',
+        boxShadow: '0 0 10px rgba(200,151,58,0.1)',
+      }}
+    >
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+        <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 3a.75.75 0 110 1.5A.75.75 0 018 4zm-.75 3h1.5v4.5h-1.5V7z"/>
+      </svg>
+      Guía de tallas
+    </button>
+  )
+}
+
+/* ── Drawer de referencia de tallas ── */
+function GuiaTallas({ tabInicial = 'dama', onCerrar }) {
+  const [tab, setTab] = useState(tabInicial)
+
+  const DAMA = [
+    { letra: 'XS',   nombre: 'Extra Pequeño',      conf: '6 – 8',   ref: '28 – 30' },
+    { letra: 'S',    nombre: 'Pequeño',             conf: '8 – 10',  ref: '30 – 32' },
+    { letra: 'M',    nombre: 'Mediano',             conf: '10 – 12', ref: '34 – 40' },
+    { letra: 'L',    nombre: 'Grande',              conf: '14 – 16', ref: '36 – 38' },
+    { letra: 'XL',   nombre: 'Extra Grande',        conf: '18 – 20', ref: '40 – 42' },
+    { letra: 'XXL',  nombre: 'Doble Extra Grande',  conf: '22 – 24', ref: '44 – 46' },
+    { letra: 'XXXL', nombre: 'Triple Extra Grande', conf: '22 – 24', ref: '44 – 46' },
+  ]
+
+  const CABALLERO = [
+    { talla: '28', ref: '≈ 71 cm' },
+    { talla: '30', ref: '≈ 76 cm' },
+    { talla: '32', ref: '≈ 81 cm' },
+    { talla: '34', ref: '≈ 86 cm' },
+    { talla: '36', ref: '≈ 91 cm' },
+    { talla: '38', ref: '≈ 97 cm' },
+    { talla: '40', ref: '≈ 102 cm' },
+  ]
+
+  return (
+    <div
+      onClick={e => e.target === e.currentTarget && onCerrar()}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 300,
+        background: 'rgba(10,22,40,0.65)',
+        backdropFilter: 'blur(4px)',
+        display: 'flex', alignItems: 'flex-end',
+        animation: 'fadeIn 0.2s ease',
+      }}
+    >
+      <div style={{
+        width: '100%', maxHeight: '85dvh',
+        background: 'var(--bg-card)',
+        borderRadius: '20px 20px 0 0',
+        padding: '20px 24px 40px',
+        overflowY: 'auto',
+        animation: 'fadeUp 0.3s var(--ease)',
+      }}>
+        {/* Handle */}
+        <div style={{ width: '40px', height: '4px', borderRadius: '99px', background: 'var(--gris-200)', margin: '0 auto 20px' }}/>
+
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
+          <div>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.15rem', color: 'var(--azul-900)', marginBottom: '3px' }}>
+              Guía de tallas
+            </h3>
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+              Equivalencia entre tallas de letra y medidas numéricas
+            </p>
+          </div>
+          <button
+            type="button" onClick={onCerrar}
+            style={{ background: 'var(--gris-100)', border: 'none', borderRadius: '50%', width: '34px', height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--gris-600)', flexShrink: 0 }}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div style={{ display: 'flex', background: 'var(--gris-100)', borderRadius: 'var(--r-lg)', padding: '4px', marginBottom: '20px', gap: '4px' }}>
+          {[
+            { id: 'dama',      label: 'Pantalón Dama' },
+            { id: 'caballero', label: 'Pantalón Caballero' },
+          ].map(({ id, label }) => (
+            <button
+              key={id} type="button"
+              onClick={() => setTab(id)}
+              style={{
+                flex: 1, padding: '9px', borderRadius: 'var(--r-md)',
+                border: 'none', cursor: 'pointer',
+                fontFamily: 'var(--font-body)', fontSize: '0.82rem', fontWeight: 500,
+                background: tab === id ? 'var(--blanco)' : 'transparent',
+                color: tab === id ? 'var(--azul-800)' : 'var(--gris-500)',
+                boxShadow: tab === id ? 'var(--sombra-sm)' : 'none',
+                transition: 'all 0.2s var(--ease)',
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Pantalón Dama */}
+        {tab === 'dama' && (
+          <>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '14px', lineHeight: 1.5 }}>
+              Tallas numéricas de confección colombiana. La columna <strong>Ref.</strong> indica la medida aproximada de cadera/cintura en cm.
+            </p>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', minWidth: '340px' }}>
+                <thead>
+                  <tr style={{ background: 'var(--azul-900)' }}>
+                    {['Talla', 'Descripción', 'N.º confección', 'Ref. (cm)'].map((h, i) => (
+                      <th key={h} style={{
+                        padding: '10px 14px', color: 'white', fontWeight: 600,
+                        textAlign: i < 2 ? 'left' : 'center',
+                        borderRadius: i === 0 ? '8px 0 0 0' : i === 3 ? '0 8px 0 0' : 0,
+                      }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {DAMA.map((f, i) => (
+                    <tr key={f.letra} style={{ background: i % 2 === 0 ? 'var(--gris-50)' : 'white', borderBottom: '1px solid var(--border)' }}>
+                      <td style={{ padding: '10px 14px', fontWeight: 700, color: 'var(--azul-700)', fontFamily: 'var(--font-display)', fontSize: '0.875rem' }}>{f.letra}</td>
+                      <td style={{ padding: '10px 14px', color: 'var(--text-primary)' }}>{f.nombre}</td>
+                      <td style={{ padding: '10px 14px', textAlign: 'center', fontWeight: 600, color: 'var(--azul-600)' }}>{f.conf}</td>
+                      <td style={{ padding: '10px 14px', textAlign: 'center', color: 'var(--text-secondary)' }}>{f.ref}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+
+        {/* Pantalón Caballero */}
+        {tab === 'caballero' && (
+          <>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '14px', lineHeight: 1.5 }}>
+              Las tallas de pantalón caballero corresponden a la medida de cintura en pulgadas (estándar internacional).
+            </p>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                <thead>
+                  <tr style={{ background: 'var(--azul-900)' }}>
+                    {['Talla (pulgadas)', 'Cintura aprox.'].map((h, i) => (
+                      <th key={h} style={{
+                        padding: '10px 14px', color: 'white', fontWeight: 600, textAlign: 'left',
+                        borderRadius: i === 0 ? '8px 0 0 0' : '0 8px 0 0',
+                      }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {CABALLERO.map((f, i) => (
+                    <tr key={f.talla} style={{ background: i % 2 === 0 ? 'var(--gris-50)' : 'white', borderBottom: '1px solid var(--border)' }}>
+                      <td style={{ padding: '10px 14px', fontWeight: 700, color: 'var(--azul-700)', fontFamily: 'var(--font-display)', fontSize: '0.875rem' }}>{f.talla}</td>
+                      <td style={{ padding: '10px 14px', color: 'var(--text-secondary)' }}>{f.ref}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+
+        {/* Nota camisa y saco */}
+        <div style={{ marginTop: '20px', padding: '14px 16px', background: 'var(--azul-50)', borderRadius: 'var(--r-lg)', border: '1px solid var(--azul-100)' }}>
+          <p style={{ fontSize: '0.78rem', color: 'var(--azul-700)', lineHeight: 1.6 }}>
+            <strong>Camisa, saco y chaqueta</strong> — se registran con tallas en letra (XS → XXXL) que corresponden a las tallas estándar de confección.
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function TallaSelector({ label, value, onChange, disabled, tallas = TALLAS_CAMISA_SACO }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -49,8 +243,9 @@ function ModalDotacion({ empleado, prendas, dotacion, cerrado, onGuardar, onCerr
   const [tallaPantalon, setTallaPantalon] = useState(dotacion?.talla_pantalon || '')
   const [tallaGeneral,  setTallaGeneral]  = useState(dotacion?.talla_general  || '')
   const [bonCalzado,    setBonCalzado]    = useState(dotacion?.incluye_bono_calzado || false)
-  const [error,   setError]   = useState('')
-  const [guardando, setGuardando] = useState(false)
+  const [error,      setError]      = useState('')
+  const [guardando,  setGuardando]  = useState(false)
+  const [guiaAbierta, setGuiaAbierta] = useState(false)
 
   const prenda = prendas.find(p => p.id === tipoPrendaId)
   const esMantenimiento = prenda && CODIGOS_MANTENIMIENTO.includes(Number(prenda.codigo))
@@ -150,9 +345,12 @@ function ModalDotacion({ empleado, prendas, dotacion, cerrado, onGuardar, onCerr
           {/* Tallas según tipo */}
           {esMantenimiento && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '16px', background: 'var(--azul-50)', borderRadius: 'var(--r-lg)', border: '1px solid var(--azul-100)' }}>
-              <p style={{ fontSize: '0.8rem', color: 'var(--azul-700)', fontWeight: 500 }}>
-                Mantenimiento — ingresa cada talla por separado
-              </p>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap' }}>
+                <p style={{ fontSize: '0.8rem', color: 'var(--azul-700)', fontWeight: 500 }}>
+                  Mantenimiento — ingresa cada talla por separado
+                </p>
+                <BtnGuia onClick={() => setGuiaAbierta(true)} />
+              </div>
               <TallaSelector label="Chaqueta"  value={tallaSaco}     onChange={setTallaSaco}     disabled={cerrado} />
               <TallaSelector label="Camibuso"  value={tallaCamisa}   onChange={setTallaCamisa}   disabled={cerrado} />
               <TallaSelector label="Pantalón"  value={tallaPantalon} onChange={setTallaPantalon} disabled={cerrado} tallas={TALLAS_PANTALON} />
@@ -162,9 +360,12 @@ function ModalDotacion({ empleado, prendas, dotacion, cerrado, onGuardar, onCerr
 
           {esSudadera && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '16px', background: 'var(--azul-50)', borderRadius: 'var(--r-lg)', border: '1px solid var(--azul-100)' }}>
-              <p style={{ fontSize: '0.8rem', color: 'var(--azul-700)', fontWeight: 500 }}>
-                Sudadera — ingresa cada talla por separado
-              </p>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap' }}>
+                <p style={{ fontSize: '0.8rem', color: 'var(--azul-700)', fontWeight: 500 }}>
+                  Sudadera — ingresa cada talla por separado
+                </p>
+                <BtnGuia onClick={() => setGuiaAbierta(true)} />
+              </div>
               <TallaSelector label="Chaqueta"  value={tallaSaco}     onChange={setTallaSaco}     disabled={cerrado} />
               <TallaSelector label="Pantalón"  value={tallaPantalon} onChange={setTallaPantalon} disabled={cerrado} tallas={TALLAS_PANTALON} />
               <TallaSelector label="Camiseta"  value={tallaCamisa}   onChange={setTallaCamisa}   disabled={cerrado} />
@@ -173,9 +374,12 @@ function ModalDotacion({ empleado, prendas, dotacion, cerrado, onGuardar, onCerr
 
           {prenda?.es_elegante && !esMantenimiento && !esSudadera && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '16px', background: 'var(--azul-50)', borderRadius: 'var(--r-lg)', border: '1px solid var(--azul-100)' }}>
-              <p style={{ fontSize: '0.8rem', color: 'var(--azul-700)', fontWeight: 500 }}>
-                Traje elegante — ingresa cada talla por separado
-              </p>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap' }}>
+                <p style={{ fontSize: '0.8rem', color: 'var(--azul-700)', fontWeight: 500 }}>
+                  Traje elegante — ingresa cada talla por separado
+                </p>
+                <BtnGuia onClick={() => setGuiaAbierta(true)} />
+              </div>
               <TallaSelector label="Camisa"   value={tallaCamisa}   onChange={setTallaCamisa}   disabled={cerrado} tallas={TALLAS_CAMISA_SACO} />
               <TallaSelector label="Saco"     value={tallaSaco}     onChange={setTallaSaco}     disabled={cerrado} tallas={TALLAS_CAMISA_SACO} />
               <TallaSelector label="Pantalón" value={tallaPantalon} onChange={setTallaPantalon} disabled={cerrado}
@@ -222,6 +426,13 @@ function ModalDotacion({ empleado, prendas, dotacion, cerrado, onGuardar, onCerr
           )}
         </div>
       </div>
+
+      {guiaAbierta && (
+        <GuiaTallas
+          tabInicial={Number(prenda?.codigo) === 3 ? 'dama' : 'caballero'}
+          onCerrar={() => setGuiaAbierta(false)}
+        />
+      )}
     </div>
   )
 }
