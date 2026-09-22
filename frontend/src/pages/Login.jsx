@@ -32,7 +32,7 @@ function InfoProcedimiento() {
             Entrega activa
           </p>
           <p style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: 700, color: 'var(--dorado-cl)', letterSpacing: '0.02em', textTransform: 'uppercase', lineHeight: 1.2 }}>
-            Segunda entrega de dotación · 2026
+            Tercera entrega de dotación · 2026
           </p>
         </div>
       </div>
@@ -223,7 +223,7 @@ export default function Login() {
           >
             <span style={{ width: '9px', height: '9px', borderRadius: '50%', background: 'var(--dorado-cl)', flexShrink: 0, animation: 'pulso 2s ease-in-out infinite' }}/>
             <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.78rem', fontWeight: 700, color: 'var(--dorado-cl)', letterSpacing: '0.05em', textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.3 }}>
-              SEGUNDA ENTREGA DE DOTACION AÑO 2026
+              TERCERA ENTREGA DE DOTACION AÑO 2026
             </span>
           </div>
 
