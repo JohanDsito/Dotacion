@@ -1,3 +1,4 @@
+import crypto from 'node:crypto'
 import { Router } from 'express'
 import supabase from '../config/supabase.js'
 import { verificarToken, soloAdmin } from '../middleware/auth.js'
@@ -14,6 +15,14 @@ function logDestructivo(req, accion, detalle) {
   console.log(
     `🗂️  [GESTIÓN] ${new Date().toISOString()} · admin="${req.usuario?.nombre || '?'}" · ${accion} · ${detalle}`
   )
+}
+
+// La columna clave_hash es NOT NULL: queda del diseño original con claves
+// individuales. Hoy el login usa la clave compartida CLAVE_COORDINADORES y
+// nunca lee esta columna, así que guardamos un hash aleatorio: rellena el
+// NOT NULL sin otorgar una clave real si algún día se retoma ese esquema.
+function claveHashPlaceholder() {
+  return crypto.createHash('sha256').update(crypto.randomUUID()).digest('hex')
 }
 
 // Comprueba que una dependencia exista; devuelve la fila o null
@@ -377,7 +386,7 @@ router.post('/coordinadores', async (req, res) => {
 
     const { data, error } = await supabase
       .from('coordinadores')
-      .insert({ nombre, dependencia_id, activo: true })
+      .insert({ nombre, dependencia_id, activo: true, clave_hash: claveHashPlaceholder() })
       .select('id, nombre, dependencia_id')
       .single()
 
