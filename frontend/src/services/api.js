@@ -17,7 +17,11 @@ async function req(method, path, body) {
     ...(body ? { body: JSON.stringify(body) } : {})
   })
   const data = await res.json()
-  if (!res.ok) throw new Error(data.error || data.errores?.join(', ') || 'Error del servidor')
+  if (!res.ok) {
+    const err = new Error(data.error || data.errores?.join(', ') || 'Error del servidor')
+    err.data = data // detalles extra del backend (ej. requiere_reasignacion)
+    throw err
+  }
   return data
 }
 
@@ -75,6 +79,6 @@ export const api = {
     coordinadores:       ()    => req('GET',  '/gestion/coordinadores'),
     crearCoordinador:    (body) => req('POST', '/gestion/coordinadores', body),
     moverCoordinador:    (id, dependencia_id) => req('PATCH', `/gestion/coordinadores/${id}/dependencia`, { dependencia_id }),
-    eliminarCoordinador: (id, forzar = false) => req('DELETE', `/gestion/coordinadores/${id}`, { forzar }),
+    eliminarCoordinador: (id, forzar = false, reasignar_a = null) => req('DELETE', `/gestion/coordinadores/${id}`, { forzar, reasignar_a }),
   },
 }

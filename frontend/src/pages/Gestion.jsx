@@ -335,19 +335,32 @@ function ModalAgregarCoordinador({ dependencias, onGuardar, onCerrar }) {
   )
 }
 
-function ModalEliminarCoordinador({ coordinador, onConfirmar, onCerrar }) {
+function ModalEliminarCoordinador({ coordinador, coordinadores, onConfirmar, onCerrar }) {
   const [eliminando, setEliminando] = useState(false)
   const [error, setError]           = useState('')
   const [requiereForzar, setRequiereForzar] = useState(false)
+  // Si tiene dotaciones a su nombre: { total } y el coordinador destino elegido
+  const [reasignacion, setReasignacion] = useState(null)
+  const [reasignarA, setReasignarA]     = useState('')
+
+  const candidatos = coordinadores.filter(c => c.id !== coordinador.id && c.activo)
 
   const handleEliminar = async (forzar) => {
+    if (reasignacion && !reasignarA) {
+      setError('Elige a qué coordinador reasignar las dotaciones')
+      return
+    }
     setError('')
     setEliminando(true)
     try {
-      await onConfirmar(forzar)
+      await onConfirmar(forzar, reasignarA || null)
     } catch (err) {
-      // El backend pide confirmación extra si es el único coordinador
-      if (err.message?.includes('único coordinador')) {
+      if (err.data?.requiere_reasignacion) {
+        // El backend pide reasignar sus dotaciones antes de eliminarlo
+        setReasignacion({ total: err.data.total_dotaciones })
+        if (err.data.sugerido_id) setReasignarA(err.data.sugerido_id)
+      } else if (err.data?.es_unico) {
+        // El backend pide confirmación extra si es el único coordinador
         setRequiereForzar(true)
         setError(err.message)
       } else {
@@ -367,6 +380,29 @@ function ModalEliminarCoordinador({ coordinador, onConfirmar, onCerrar }) {
             {' '}de <strong>{coordinador.dependencia}</strong>.
           </p>
 
+          {reasignacion && (
+            <>
+              <div className="alerta alerta-warning">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style={{ flexShrink: 0 }}>
+                  <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 4a.75.75 0 01.75.75v3a.75.75 0 01-1.5 0v-3A.75.75 0 018 5zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+                </svg>
+                <div>
+                  Registró <strong>{reasignacion.total} dotación{reasignacion.total !== 1 ? 'es' : ''}</strong>.
+                  Para eliminarlo, pásalas a otro coordinador: en el reporte aparecerá él como responsable.
+                </div>
+              </div>
+              <div className="input-group">
+                <label className="input-label">Reasignar dotaciones a</label>
+                <select className="input" value={reasignarA} onChange={e => setReasignarA(e.target.value)} disabled={eliminando}>
+                  <option value="">Selecciona un coordinador…</option>
+                  {candidatos.map(c => (
+                    <option key={c.id} value={c.id}>{c.nombre} — {c.dependencia}</option>
+                  ))}
+                </select>
+              </div>
+            </>
+          )}
+
           {requiereForzar && (
             <div className="alerta alerta-warning">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style={{ flexShrink: 0 }}>
@@ -385,8 +421,8 @@ function ModalEliminarCoordinador({ coordinador, onConfirmar, onCerrar }) {
               {eliminando ? <><Spinner size={15} /> Eliminando…</> : 'Eliminar de todos modos'}
             </button>
           ) : (
-            <button className="btn btn-danger" onClick={() => handleEliminar(false)} disabled={eliminando}>
-              {eliminando ? <><Spinner size={15} /> Eliminando…</> : 'Sí, eliminar'}
+            <button className="btn btn-danger" onClick={() => handleEliminar(false)} disabled={eliminando || (reasignacion && !reasignarA)}>
+              {eliminando ? <><Spinner size={15} /> Eliminando…</> : reasignacion ? 'Reasignar y eliminar' : 'Sí, eliminar'}
             </button>
           )}
         </div>
@@ -740,8 +776,8 @@ export default function Gestion() {
     mostrarToast(r.mensaje)
     cargar()
   }
-  const eliminarCoordinador = async (id, forzar) => {
-    const r = await api.gestion.eliminarCoordinador(id, forzar)
+  const eliminarCoordinador = async (id, forzar, reasignarA) => {
+    const r = await api.gestion.eliminarCoordinador(id, forzar, reasignarA)
     setModalEliminarCoord(null)
     mostrarToast(r.mensaje)
     cargar()
@@ -894,7 +930,8 @@ export default function Gestion() {
       {modalEliminarCoord && (
         <ModalEliminarCoordinador
           coordinador={modalEliminarCoord}
-          onConfirmar={(forzar) => eliminarCoordinador(modalEliminarCoord.id, forzar)}
+          coordinadores={coordinadores}
+          onConfirmar={(forzar, reasignarA) => eliminarCoordinador(modalEliminarCoord.id, forzar, reasignarA)}
           onCerrar={() => setModalEliminarCoord(null)}
         />
       )}

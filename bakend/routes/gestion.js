@@ -435,13 +435,17 @@ router.patch('/coordinadores/:id/dependencia', async (req, res) => {
 })
 
 // DELETE /api/gestion/coordinadores/:id
-// Body opcional: { forzar: true }
-// - Bloquea si el coordinador tiene dotaciones registradas a su nombre (integridad)
+// Body opcional: { forzar: true, reasignar_a: <coordinador_id> }
+// - Si tiene dotaciones registradas a su nombre, exige reasignarlas a otro
+//   coordinador (reasignar_a) para no dejar registros sin responsable
 // - Advierte si es el único coordinador de su dependencia (requiere forzar)
+// Todas las validaciones van antes de modificar datos, para no dejar
+// dotaciones reasignadas si luego la eliminación se rechaza.
 router.delete('/coordinadores/:id', async (req, res) => {
   try {
     const { id } = req.params
     const forzar = req.body?.forzar === true
+    const reasignarA = req.body?.reasignar_a || null
 
     const { data: coord } = await supabase
       .from('coordinadores')
@@ -451,16 +455,58 @@ router.delete('/coordinadores/:id', async (req, res) => {
 
     if (!coord) return res.status(404).json({ error: 'Coordinador no encontrado' })
 
-    // Integridad: si registró dotaciones, no se puede borrar (rompería el reporte)
-    const { count: nDot } = await supabase
+    // Dotaciones registradas por este coordinador
+    const { data: dots, error: dotError } = await supabase
       .from('dotaciones')
-      .select('id', { count: 'exact', head: true })
+      .select('empleado_id, empleados ( dependencia_id )')
       .eq('coordinador_id', id)
+    if (dotError) throw dotError
+    const nDot = dots?.length || 0
 
-    if ((nDot || 0) > 0) {
-      return res.status(409).json({
-        error: `No se puede eliminar: este coordinador tiene ${nDot} dotación(es) registrada(s) a su nombre. Reasigna o elimina esos registros primero.`,
-      })
+    let destino = null
+    if (nDot > 0) {
+      if (!reasignarA) {
+        // Sugerir un responsable de la dependencia donde están hoy esos empleados
+        const conteo = {}
+        for (const d of dots) {
+          const dep = d.empleados?.dependencia_id
+          if (dep) conteo[dep] = (conteo[dep] || 0) + 1
+        }
+        const depsOrdenadas = Object.keys(conteo).sort((a, b) => conteo[b] - conteo[a])
+        let sugerido = null
+        if (depsOrdenadas.length > 0) {
+          const { data: candidatos } = await supabase
+            .from('coordinadores')
+            .select('id, dependencia_id')
+            .in('dependencia_id', depsOrdenadas)
+            .eq('activo', true)
+            .neq('id', id)
+          for (const dep of depsOrdenadas) {
+            const c = (candidatos || []).find(x => String(x.dependencia_id) === dep)
+            if (c) { sugerido = c.id; break }
+          }
+        }
+
+        return res.status(409).json({
+          error: `Este coordinador tiene ${nDot} dotación(es) registrada(s) a su nombre. Elige a qué coordinador reasignarlas para poder eliminarlo.`,
+          requiere_reasignacion: true,
+          total_dotaciones: nDot,
+          sugerido_id: sugerido,
+        })
+      }
+
+      if (String(reasignarA) === String(id)) {
+        return res.status(400).json({ error: 'Elige un coordinador distinto al que vas a eliminar' })
+      }
+      const { data: dest } = await supabase
+        .from('coordinadores')
+        .select('id, nombre, activo')
+        .eq('id', reasignarA)
+        .single()
+      if (!dest || !dest.activo) {
+        return res.status(400).json({ error: 'El coordinador destino no existe o está inactivo' })
+      }
+      destino = dest
     }
 
     // ¿Es el único coordinador de su dependencia?
@@ -478,15 +524,36 @@ router.delete('/coordinadores/:id', async (req, res) => {
       })
     }
 
+    // Reasignar sus dotaciones (ya validado todo lo anterior)
+    if (destino) {
+      const { error: reasigError } = await supabase
+        .from('dotaciones')
+        .update({ coordinador_id: destino.id })
+        .eq('coordinador_id', id)
+      if (reasigError) throw reasigError
+    }
+
     const { error } = await supabase.from('coordinadores').delete().eq('id', id)
-    if (error) throw error
+    if (error) {
+      // Sin transacciones: si la eliminación falla, devolver las dotaciones a su dueño original
+      if (destino) {
+        await supabase.from('dotaciones').update({ coordinador_id: id }).eq('coordinador_id', destino.id)
+          .in('empleado_id', dots.map(d => d.empleado_id))
+      }
+      throw error
+    }
 
     logDestructivo(
       req,
       'ELIMINAR_COORDINADOR',
-      `coordinador="${coord.nombre}" · era_unico=${esUnico} · forzado=${forzar}`
+      `coordinador="${coord.nombre}" · era_unico=${esUnico} · forzado=${forzar}` +
+        (destino ? ` · dotaciones_reasignadas=${nDot} → "${destino.nombre}"` : '')
     )
-    return res.json({ mensaje: `Coordinador "${coord.nombre}" eliminado correctamente` })
+    return res.json({
+      mensaje: destino
+        ? `Coordinador "${coord.nombre}" eliminado. ${nDot} dotación(es) reasignada(s) a ${destino.nombre}.`
+        : `Coordinador "${coord.nombre}" eliminado correctamente`,
+    })
   } catch (err) {
     console.error('❌ DELETE /gestion/coordinadores/:id:', err.message)
     return res.status(500).json({ error: 'No se pudo eliminar el coordinador' })
