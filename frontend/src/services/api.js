@@ -39,6 +39,7 @@ export const api = {
   // Admin
   reporte:           (params)  => req('GET',  `/admin/reporte?${new URLSearchParams(params || {})}`),
   resumen:           ()        => req('GET',  '/admin/resumen'),
+  pendientes:        ()        => req('GET',  '/admin/pendientes'),
   exportar:          async ()  => {
     const res = await fetch(`${BASE}/admin/exportar`, {
       headers: { 'Authorization': `Bearer ${token()}` }

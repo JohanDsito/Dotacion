@@ -171,15 +171,139 @@ function ModalDetalle({ fila, onCerrar, onEliminar }) {
   )
 }
 
-function StatCard({ label, valor, sub, color, icono }) {
+function ModalPendientes({ onCerrar }) {
+  const [pendientes, setPendientes] = useState([])
+  const [cargando,   setCargando]   = useState(true)
+  const [error,      setError]      = useState('')
+  const [busqueda,   setBusqueda]   = useState('')
+  const [filtroDep,  setFiltroDep]  = useState('')
+
+  useEffect(() => {
+    api.pendientes()
+      .then(setPendientes)
+      .catch(err => setError(err.message))
+      .finally(() => setCargando(false))
+  }, [])
+
+  const dependencias = [...new Set(pendientes.map(p => p.dependencia))].sort()
+
+  const filtrados = pendientes.filter(p =>
+    (!filtroDep || p.dependencia === filtroDep) &&
+    (!busqueda  || p.nombre.toLowerCase().includes(busqueda.toLowerCase()))
+  )
+
+  // Agrupar por dependencia, ordenando las que más pendientes tienen primero
+  const grupos = Object.values(
+    filtrados.reduce((acc, p) => {
+      (acc[p.dependencia] ||= { dependencia: p.dependencia, subdireccion: p.subdireccion, responsables: p.responsables, empleados: [] })
+        .empleados.push(p)
+      return acc
+    }, {})
+  ).sort((a, b) => b.empleados.length - a.empleados.length || a.dependencia.localeCompare(b.dependencia))
+
   return (
-    <div style={{
-      background: 'var(--bg-card)', borderRadius: 'var(--r-xl)',
-      padding: '20px 22px',
-      border: '1px solid rgba(10,22,40,0.06)',
-      boxShadow: 'var(--sombra-sm)',
-      display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px',
-    }}>
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onCerrar()}>
+      <div className="modal" style={{ maxWidth: '640px' }}>
+        <div className="modal-header">
+          <div>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '1.05rem', color: 'var(--azul-900)' }}>
+              Empleados pendientes
+            </h3>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+              {cargando ? 'Cargando…' : `${pendientes.length} empleado${pendientes.length !== 1 ? 's' : ''} sin dotación registrada`}
+            </p>
+          </div>
+          <button className="btn btn-ghost btn-icon" onClick={onCerrar} aria-label="Cerrar">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M3 3l12 12M15 3L3 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {cargando ? (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '40px', gap: '10px', color: 'var(--text-secondary)' }}>
+              <span className="spinner spinner-dark"/> Cargando pendientes…
+            </div>
+          ) : error ? (
+            <div className="alerta alerta-error">{error}</div>
+          ) : pendientes.length === 0 ? (
+            <div className="alerta alerta-success">Todos los empleados activos tienen su dotación registrada.</div>
+          ) : (
+            <>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
+                <input
+                  className="input" type="text" placeholder="Buscar empleado…"
+                  value={busqueda} onChange={e => setBusqueda(e.target.value)}
+                />
+                <select className="input" value={filtroDep} onChange={e => setFiltroDep(e.target.value)}>
+                  <option value="">Todas las dependencias</option>
+                  {dependencias.map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+
+              {grupos.length === 0 ? (
+                <p style={{ textAlign: 'center', padding: '20px', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                  No hay pendientes con los filtros seleccionados
+                </p>
+              ) : grupos.map(g => (
+                <div key={g.dependencia} style={{ background: 'var(--azul-50)', borderRadius: 'var(--r-md)', padding: '14px 16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '10px' }}>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--azul-900)' }}>{g.dependencia}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                        Responsable{g.responsables.length !== 1 ? 's' : ''}: {g.responsables.length > 0 ? g.responsables.join(', ') : 'sin responsable asignado'}
+                      </div>
+                    </div>
+                    <span className="badge badge-gray" style={{ flexShrink: 0, color: 'var(--rojo)' }}>
+                      {g.empleados.length} pendiente{g.empleados.length !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {g.empleados.map(e => (
+                      <div key={e.id} style={{
+                        background: 'var(--blanco)', borderRadius: 'var(--r-md)', padding: '8px 12px',
+                        border: '1px solid var(--azul-100)',
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', fontSize: '0.875rem',
+                      }}>
+                        <span style={{ color: 'var(--azul-900)', fontWeight: 500 }}>{e.nombre}</span>
+                        <span style={{ color: 'var(--text-secondary)', fontSize: '0.78rem', textAlign: 'right' }}>{e.cargo}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+
+        <div className="modal-footer">
+          <button className="btn btn-secondary" onClick={onCerrar}>Cerrar</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function StatCard({ label, valor, sub, color, icono, onClick }) {
+  return (
+    <div
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? e => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), onClick()) : undefined}
+      style={{
+        background: 'var(--bg-card)', borderRadius: 'var(--r-xl)',
+        padding: '20px 22px',
+        border: '1px solid rgba(10,22,40,0.06)',
+        boxShadow: 'var(--sombra-sm)',
+        display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px',
+        cursor: onClick ? 'pointer' : undefined,
+        transition: 'box-shadow 0.15s, transform 0.15s',
+      }}
+      onMouseEnter={onClick ? e => { e.currentTarget.style.boxShadow = 'var(--sombra-lg)'; e.currentTarget.style.transform = 'translateY(-1px)' } : undefined}
+      onMouseLeave={onClick ? e => { e.currentTarget.style.boxShadow = 'var(--sombra-sm)'; e.currentTarget.style.transform = 'none' } : undefined}
+    >
       <div>
         <div style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>{label}</div>
         <div style={{ fontSize: '2rem', fontWeight: 600, color: color || 'var(--azul-900)', fontFamily: 'var(--font-display)', lineHeight: 1 }}>{valor}</div>
@@ -210,6 +334,7 @@ export default function Dashboard() {
   const [modalReset,    setModalReset]    = useState(false)
   const [confirmText,   setConfirmText]   = useState('')
   const [restableciendo,setRestableciendo]= useState(false)
+  const [modalPendientes, setModalPendientes] = useState(false)
 
   const mostrarToast = (msg, tipo = 'success') => {
     setToast({ msg, tipo })
@@ -394,6 +519,8 @@ export default function Dashboard() {
           <StatCard
             label="Pendientes" valor={resumen?.pendientes ?? '—'}
             color={resumen?.pendientes > 0 ? 'var(--rojo)' : 'var(--verde)'}
+            sub={resumen?.pendientes > 0 ? 'Ver quiénes faltan →' : ''}
+            onClick={resumen?.pendientes > 0 ? () => setModalPendientes(true) : undefined}
             icono={<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" strokeWidth="1.5"/><path d="M10 6v4l2.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>}
           />
         </div>
@@ -545,6 +672,9 @@ export default function Dashboard() {
           }}
         />
       )}
+
+      {/* Modal empleados pendientes */}
+      {modalPendientes && <ModalPendientes onCerrar={() => setModalPendientes(false)} />}
 
       {/* Modal restablecer formulario */}
       {modalReset && (

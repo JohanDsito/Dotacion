@@ -29,21 +29,86 @@ router.get('/reporte', async (req, res) => {
   return res.json(data)
 })
 
+// Empleados activos que aún no tienen dotación registrada.
+// Se usa tanto para el conteo del resumen como para el listado,
+// así la tarjeta "Pendientes" y la lista siempre coinciden.
+async function obtenerPendientes() {
+  const [empleados, dotaciones] = await Promise.all([
+    supabase
+      .from('empleados')
+      .select('id, nombre, cargo, tipo_cargo, dependencia_id, dependencias ( nombre, subdireccion )')
+      .eq('activo', true)
+      .order('nombre'),
+    supabase.from('dotaciones').select('empleado_id')
+  ])
+
+  if (empleados.error)  throw empleados.error
+  if (dotaciones.error) throw dotaciones.error
+
+  const conDotacion = new Set((dotaciones.data || []).map(d => d.empleado_id))
+  return (empleados.data || []).filter(e => !conDotacion.has(e.id))
+}
+
 // GET /api/admin/resumen
 // Conteos rápidos para el dashboard
 router.get('/resumen', async (req, res) => {
-  const [dotaciones, empleados, formulario] = await Promise.all([
-    supabase.from('dotaciones').select('id', { count: 'exact', head: true }),
-    supabase.from('empleados').select('id', { count: 'exact', head: true }).eq('activo', true),
-    supabase.from('formulario_estado').select('cerrado').eq('id', 'global').single()
-  ])
+  try {
+    const [dotaciones, empleados, formulario, pendientes] = await Promise.all([
+      supabase.from('dotaciones').select('id', { count: 'exact', head: true }),
+      supabase.from('empleados').select('id', { count: 'exact', head: true }).eq('activo', true),
+      supabase.from('formulario_estado').select('cerrado').eq('id', 'global').single(),
+      obtenerPendientes()
+    ])
 
-  return res.json({
-    total_dotaciones:  dotaciones.count  ?? 0,
-    total_empleados:   empleados.count   ?? 0,
-    pendientes:        (empleados.count ?? 0) - (dotaciones.count ?? 0),
-    formulario_cerrado: formulario.data?.cerrado ?? false
-  })
+    return res.json({
+      total_dotaciones:  dotaciones.count  ?? 0,
+      total_empleados:   empleados.count   ?? 0,
+      pendientes:        pendientes.length,
+      formulario_cerrado: formulario.data?.cerrado ?? false
+    })
+  } catch (err) {
+    console.error('❌ GET /admin/resumen:', err.message)
+    return res.status(500).json({ error: 'No se pudo cargar el resumen' })
+  }
+})
+
+// GET /api/admin/pendientes
+// Lista de empleados activos sin dotación, con los responsables de su dependencia
+router.get('/pendientes', async (req, res) => {
+  try {
+    const pendientes = await obtenerPendientes()
+
+    const depIds = [...new Set(pendientes.map(e => e.dependencia_id))]
+    let responsablesPorDep = {}
+    if (depIds.length > 0) {
+      const { data: coords, error } = await supabase
+        .from('coordinadores')
+        .select('nombre, dependencia_id')
+        .in('dependencia_id', depIds)
+        .eq('activo', true)
+        .order('nombre')
+      if (error) throw error
+      for (const c of coords || []) {
+        (responsablesPorDep[c.dependencia_id] ||= []).push(c.nombre)
+      }
+    }
+
+    const data = pendientes.map(e => ({
+      id: e.id,
+      nombre: e.nombre,
+      cargo: e.cargo,
+      tipo_cargo: e.tipo_cargo,
+      dependencia_id: e.dependencia_id,
+      dependencia: e.dependencias?.nombre || '—',
+      subdireccion: e.dependencias?.subdireccion || '—',
+      responsables: responsablesPorDep[e.dependencia_id] || [],
+    }))
+
+    return res.json(data)
+  } catch (err) {
+    console.error('❌ GET /admin/pendientes:', err.message)
+    return res.status(500).json({ error: 'No se pudieron cargar los pendientes' })
+  }
 })
 
 // ─────────────────────────────────────────

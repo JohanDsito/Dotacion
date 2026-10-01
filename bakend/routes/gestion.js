@@ -57,16 +57,15 @@ router.get('/empleados', async (req, res) => {
     const { data: empleados, error } = await query
     if (error) throw error
 
-    // Marcar cuáles tienen dotación (para advertencias en el frontend)
-    let conDotacion = new Set()
-    if (empleados.length > 0) {
-      const ids = empleados.map(e => e.id)
-      const { data: dots } = await supabase
-        .from('dotaciones')
-        .select('empleado_id')
-        .in('empleado_id', ids)
-      conDotacion = new Set((dots || []).map(d => d.empleado_id))
-    }
+    // Marcar cuáles tienen dotación (para advertencias en el frontend).
+    // Se traen todos los empleado_id de dotaciones en vez de filtrar con
+    // .in(ids): con cientos de IDs la URL excede el límite y la consulta
+    // falla, dejando a todos como "sin dotación".
+    const { data: dots, error: dotError } = await supabase
+      .from('dotaciones')
+      .select('empleado_id')
+    if (dotError) throw dotError
+    const conDotacion = new Set((dots || []).map(d => d.empleado_id))
 
     const data = empleados.map(e => ({
       id: e.id,
